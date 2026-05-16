@@ -24,7 +24,7 @@ function BarChartIcon({ size = 18 }: { size?: number }) {
 
 export function BottomNav({ current, onNavigate }: Props) {
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50" style={{ background: '#0f0f0f', borderTop: '1px solid #1a1a1a' }}>
+    <nav className="fixed bottom-0 left-0 right-0 z-40" style={{ background: '#0f0f0f', borderTop: '1px solid #1a1a1a' }}>
       <div className="flex items-center" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}>
         {([
           { id: 'home', label: 'Today', Icon: HomeIcon },

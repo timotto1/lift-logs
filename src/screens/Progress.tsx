@@ -553,7 +553,7 @@ function AddSessionSheet({ userId, onSaved, onClose }: { userId: string; onSaved
         </div>
 
         {/* Save button */}
-        <div className="px-5 pt-4 shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}>
+        <div className="px-5 pt-4 shrink-0" style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 16px), 32px)' }}>
           <button
             onClick={handleSave}
             disabled={saving}
