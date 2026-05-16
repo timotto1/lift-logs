@@ -1,10 +1,12 @@
 import { useMemo, useState } from 'react';
-import type { SessionWithSets } from '../lib/supabase';
+import type { SessionWithSets, SetLog } from '../lib/supabase';
 import { WORKOUTS, getAllExercises, getWorkoutById, type Exercise, type Workout } from '../lib/workouts';
 import { relTime } from '../lib/format';
+import { updateSetLog, deleteSession } from '../hooks/useHistory';
 
 interface Props {
   history: SessionWithSets[];
+  onRefetch: () => Promise<void>;
 }
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -265,7 +267,179 @@ function ExerciseRow({ data, expanded, onToggle }: { data: ExerciseRowData; expa
   );
 }
 
-export function Progress({ history }: Props) {
+function EditableSet({ set, exName, onSaved }: { set: SetLog; exName: string; onSaved: () => void }) {
+  const [weight, setWeight] = useState(set.weight != null ? String(set.weight) : '');
+  const [reps, setReps] = useState(set.reps != null ? String(set.reps) : '');
+  const [saving, setSaving] = useState(false);
+  const dirty = weight !== (set.weight != null ? String(set.weight) : '') || reps !== (set.reps != null ? String(set.reps) : '');
+
+  const save = async () => {
+    setSaving(true);
+    await updateSetLog(set.id, {
+      weight: weight ? parseFloat(weight) : null,
+      reps: reps ? parseInt(reps) : null,
+    });
+    setSaving(false);
+    onSaved();
+  };
+
+  return (
+    <div className="flex items-center gap-2 py-1.5">
+      <div className="text-xs text-zinc-500 w-5 text-center tabular-nums">{set.set_number}</div>
+      <input
+        type="number"
+        inputMode="decimal"
+        value={weight}
+        onChange={(e) => setWeight(e.target.value)}
+        placeholder="—"
+        className="w-16 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-sm font-mono text-center focus:outline-none focus:border-zinc-500"
+      />
+      <span className="text-xs text-zinc-600">kg ×</span>
+      <input
+        type="number"
+        inputMode="numeric"
+        value={reps}
+        onChange={(e) => setReps(e.target.value)}
+        placeholder="—"
+        className="w-14 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-sm font-mono text-center focus:outline-none focus:border-zinc-500"
+      />
+      <span className="text-xs text-zinc-600">reps</span>
+      {dirty && (
+        <button
+          onClick={save}
+          disabled={saving}
+          className="ml-auto text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 active:scale-95 transition-transform"
+        >
+          {saving ? '…' : 'Save'}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function SessionCard({ session, onDeleted, onSaved }: { session: SessionWithSets; onDeleted: () => void; onSaved: () => void }) {
+  const [expanded, setExpanded] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const workout = getWorkoutById(session.workout_id);
+
+  // Group sets by exercise
+  const byExercise = useMemo(() => {
+    const map = new Map<string, SetLog[]>();
+    session.sets.forEach((s) => {
+      const arr = map.get(s.exercise_id) ?? [];
+      arr.push(s);
+      map.set(s.exercise_id, arr);
+    });
+    return map;
+  }, [session]);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    await deleteSession(session.id);
+    onDeleted();
+  };
+
+  return (
+    <div className="rounded-2xl bg-zinc-900/50 border border-zinc-800 overflow-hidden">
+      {/* Header row */}
+      <button
+        onClick={() => setExpanded((e) => !e)}
+        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-zinc-900 transition-colors text-left"
+      >
+        <div
+          className="w-1 h-10 rounded-full shrink-0"
+          style={{ background: workout?.color.from ?? '#27272a' }}
+        />
+        <div className="flex-1 min-w-0">
+          <div className="text-sm font-semibold text-zinc-100 truncate">{workout?.name ?? 'Workout'}</div>
+          <div className="text-[11px] text-zinc-500 mt-0.5">
+            {session.sets.length} sets · {session.duration_minutes ?? '—'} min
+          </div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className="text-xs text-zinc-400">{new Date(session.finished_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
+          <div className="text-[11px] text-zinc-600 mt-0.5">{relTime(session.finished_at)}</div>
+        </div>
+        <div className="text-zinc-600 ml-1 text-xs">{expanded ? '▲' : '▼'}</div>
+      </button>
+
+      {/* Expanded: editable sets */}
+      {expanded && (
+        <div className="px-4 pb-4 border-t border-zinc-800">
+          {Array.from(byExercise.entries()).map(([exId, sets]) => {
+            const allExercises = getAllExercises();
+            const ex = allExercises.find((e) => e.id === exId);
+            return (
+              <div key={exId} className="mt-3">
+                <div className="text-[11px] font-semibold text-zinc-400 mb-1.5">{ex?.name ?? exId}</div>
+                {sets.map((s) => (
+                  <EditableSet key={s.id} set={s} exName={ex?.name ?? exId} onSaved={onSaved} />
+                ))}
+              </div>
+            );
+          })}
+
+          {/* Delete */}
+          <div className="mt-4 pt-3 border-t border-zinc-800">
+            {!confirmDelete ? (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-xs text-zinc-600 active:text-rose-400 transition-colors"
+              >
+                Delete session
+              </button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-zinc-500">Are you sure?</span>
+                <button
+                  onClick={handleDelete}
+                  disabled={deleting}
+                  className="text-xs font-semibold text-rose-400 active:scale-95 transition-transform"
+                >
+                  {deleting ? 'Deleting…' : 'Yes, delete'}
+                </button>
+                <button
+                  onClick={() => setConfirmDelete(false)}
+                  className="text-xs text-zinc-500"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HistoryView({ history, onRefetch }: { history: SessionWithSets[]; onRefetch: () => Promise<void> }) {
+  if (history.length === 0) {
+    return (
+      <div className="px-4 py-16 text-center">
+        <div className="text-zinc-600 text-sm">No sessions logged yet.</div>
+        <div className="text-zinc-700 text-xs mt-1">Finish a workout to see it here.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="px-4 space-y-3 mt-2">
+      {history.map((session) => (
+        <SessionCard
+          key={session.id}
+          session={session}
+          onDeleted={onRefetch}
+          onSaved={onRefetch}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function Progress({ history, onRefetch }: Props) {
+  const [tab, setTab] = useState<'exercises' | 'history'>('exercises');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const allExercises = getAllExercises();
 
@@ -291,35 +465,63 @@ export function Progress({ history }: Props) {
         <h1 className="text-4xl font-bold leading-tight">Are you winning?</h1>
       </div>
 
-      <ConsistencyHeatmap history={history} />
+      {/* Segmented control */}
+      <div className="px-4 mb-4">
+        <div className="flex bg-zinc-900 rounded-xl p-1 border border-zinc-800">
+          {(['exercises', 'history'] as const).map((t) => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
+              style={{
+                background: tab === t ? '#ffffff' : 'transparent',
+                color: tab === t ? '#09090b' : '#71717a',
+              }}
+            >
+              {t === 'exercises' ? 'Exercises' : 'History'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {tab === 'exercises' && (
+        <>
+          <ConsistencyHeatmap history={history} />
+        </>
+      )}
+
+      {tab === 'history' && (
+        <HistoryView history={history} onRefetch={onRefetch} />
+      )}
 
       {/* Exercise list grouped by workout */}
-      <div className="mt-4">
-        {WORKOUTS.map((workout) => {
-          const rows = exerciseData.filter((d) => d.exercise.workout.id === workout.id);
-          return (
-            <div key={workout.id} className="mb-4">
-              {/* Group header */}
-              <div className="px-4 py-2 flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full" style={{ background: workout.color.from }} />
-                <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">
-                  W{workout.id} — {workout.name}
+      {tab === 'exercises' && (
+        <div className="mt-4">
+          {WORKOUTS.map((workout) => {
+            const rows = exerciseData.filter((d) => d.exercise.workout.id === workout.id);
+            return (
+              <div key={workout.id} className="mb-4">
+                <div className="px-4 py-2 flex items-center gap-2">
+                  <div className="w-2 h-2 rounded-full" style={{ background: workout.color.from }} />
+                  <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">
+                    W{workout.id} — {workout.name}
+                  </div>
+                </div>
+                <div className="mx-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 overflow-hidden">
+                  {rows.map((row) => (
+                    <ExerciseRow
+                      key={row.exercise.id}
+                      data={row}
+                      expanded={expandedId === row.exercise.id}
+                      onToggle={() => setExpandedId(expandedId === row.exercise.id ? null : row.exercise.id)}
+                    />
+                  ))}
                 </div>
               </div>
-              <div className="mx-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 overflow-hidden">
-                {rows.map((row) => (
-                  <ExerciseRow
-                    key={row.exercise.id}
-                    data={row}
-                    expanded={expandedId === row.exercise.id}
-                    onToggle={() => setExpandedId(expandedId === row.exercise.id ? null : row.exercise.id)}
-                  />
-                ))}
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

@@ -63,6 +63,24 @@ export function useHistory(userId: string | null) {
   return { history, loading, error, refetch };
 }
 
+// Update a single set log (weight/reps)
+export async function updateSetLog(
+  setId: string,
+  patch: { weight: number | null; reps: number | null }
+): Promise<{ error: string | null }> {
+  const { error } = await supabase
+    .from('set_logs')
+    .update({ weight: patch.weight, reps: patch.reps })
+    .eq('id', setId);
+  return { error: error?.message ?? null };
+}
+
+// Delete a full session (set_logs cascade via FK)
+export async function deleteSession(sessionId: string): Promise<{ error: string | null }> {
+  const { error } = await supabase.from('sessions').delete().eq('id', sessionId);
+  return { error: error?.message ?? null };
+}
+
 // Save a finished session: insert session row, then bulk-insert set_logs
 export async function saveSession(params: {
   userId: string;
