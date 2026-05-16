@@ -17,7 +17,7 @@ body,
 }
 
 body {
-  font-family: 'Inter', -apple-system, system-ui, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Helvetica Neue', sans-serif;
   margin: 0;
   /* prevent rubber-band overscroll showing white */
   overscroll-behavior-y: contain;
