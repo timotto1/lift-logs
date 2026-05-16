@@ -251,62 +251,53 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
                     </div>
                   )}
 
-                  <div
-                    className="grid gap-2 px-1 mb-1.5"
-                    style={{ gridTemplateColumns: '28px 1fr 1fr 44px' }}
-                  >
-                    <div className="text-[10px] uppercase tracking-wider text-zinc-600 font-semibold">
-                      Set
-                    </div>
-                    <div className="text-[10px] uppercase tracking-wider text-zinc-600 font-semibold">
-                      Weight (kg)
-                    </div>
-                    <div className="text-[10px] uppercase tracking-wider text-zinc-600 font-semibold">
-                      Reps
-                    </div>
-                    <div></div>
-                  </div>
-
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {sets.map((set, idx) => {
                       const lastSet = lastData?.sets[idx];
                       return (
                         <div
                           key={idx}
-                          className={`grid gap-2 items-center transition-opacity ${
-                            set.done ? 'opacity-60' : ''
-                          }`}
-                          style={{ gridTemplateColumns: '28px 1fr 1fr 44px' }}
+                          className={`flex items-center gap-2 transition-opacity ${set.done ? 'opacity-50' : ''}`}
                         >
-                          <div className="text-sm font-mono tabular-nums text-zinc-500 text-center">
-                            {idx + 1}
+                          {/* Set number */}
+                          <div className="text-xs font-mono text-zinc-600 w-4 text-center shrink-0">{idx + 1}</div>
+
+                          {/* Weight input */}
+                          <div className="flex items-center flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
+                            <input
+                              type="number"
+                              inputMode="decimal"
+                              value={set.weight}
+                              onChange={(e) => updateSet(ex.id, idx, { weight: e.target.value })}
+                              placeholder={lastSet?.weight != null ? String(lastSet.weight) : '0'}
+                              className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
+                            />
+                            <span className="text-[11px] text-zinc-600 pr-2.5 shrink-0">kg</span>
                           </div>
-                          <input
-                            type="number"
-                            inputMode="decimal"
-                            value={set.weight}
-                            onChange={(e) => updateSet(ex.id, idx, { weight: e.target.value })}
-                            placeholder={lastSet?.weight != null ? String(lastSet.weight) : '—'}
-                            className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-base font-mono tabular-nums text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:bg-zinc-900"
-                          />
-                          <input
-                            type="number"
-                            inputMode="numeric"
-                            value={set.reps}
-                            onChange={(e) => updateSet(ex.id, idx, { reps: e.target.value })}
-                            placeholder={String(ex.reps)}
-                            className="bg-zinc-950 border border-zinc-800 rounded-lg px-3 py-2.5 text-base font-mono tabular-nums text-zinc-100 placeholder:text-zinc-700 focus:outline-none focus:bg-zinc-900"
-                          />
+
+                          <span className="text-xs text-zinc-600 shrink-0">×</span>
+
+                          {/* Reps input */}
+                          <div className="flex items-center flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
+                            <input
+                              type="number"
+                              inputMode="numeric"
+                              value={set.reps}
+                              onChange={(e) => updateSet(ex.id, idx, { reps: e.target.value })}
+                              placeholder={String(ex.reps)}
+                              className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
+                            />
+                            <span className="text-[11px] text-zinc-600 pr-2.5 shrink-0">reps</span>
+                          </div>
+
+                          {/* Done button */}
                           <button
                             onClick={() => completeSet(ex.id, idx, ex.rest)}
-                            className="h-11 rounded-lg flex items-center justify-center transition-all active:scale-95"
-                            style={{
-                              background: set.done ? '#10b981' : '#27272a',
-                              color: set.done ? '#022c22' : '#a1a1aa',
-                            }}
+                            className="h-10 w-10 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+                            style={{ background: set.done ? '#22c55e' : '#1e1e1e', color: set.done ? '#0a1f0c' : '#555', borderRadius: 8 }}
                             aria-label={set.done ? 'Undo' : 'Complete'}
                           >
-                            <CheckIcon size={18} />
+                            <CheckIcon size={16} />
                           </button>
                         </div>
                       );
