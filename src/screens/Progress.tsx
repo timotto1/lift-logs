@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { SessionWithSets } from '../lib/supabase';
-import { WORKOUTS, getAllExercises, getWorkoutById } from '../lib/workouts';
+import { WORKOUTS, getAllExercises, getWorkoutById, type Exercise, type Workout } from '../lib/workouts';
 import { relTime } from '../lib/format';
 
 interface Props {
@@ -11,7 +11,6 @@ const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const WEEKS = 16;
 
 function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
-  // Build a map of date string → workout color
   const sessionMap = useMemo(() => {
     const map: Record<string, string> = {};
     history.forEach((s) => {
@@ -23,13 +22,11 @@ function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
     return map;
   }, [history]);
 
-  // Build grid: 16 weeks × 7 days, ending today
   const today = new Date();
-  // Align to end of current week (Sunday)
-  const todayDay = today.getDay(); // 0=Sun
-  const daysSinceMonday = (todayDay + 6) % 7; // Mon=0
+  const todayDay = today.getDay();
+  const daysSinceMonday = (todayDay + 6) % 7;
   const gridEnd = new Date(today);
-  gridEnd.setDate(today.getDate() + (6 - daysSinceMonday)); // end on Sunday
+  gridEnd.setDate(today.getDate() + (6 - daysSinceMonday));
 
   const cells: Array<{ date: Date; key: string; isFuture: boolean }> = [];
   for (let w = WEEKS - 1; w >= 0; w--) {
@@ -41,7 +38,6 @@ function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
     }
   }
 
-  // Month labels: find first cell of each month
   const monthLabels: Array<{ label: string; col: number }> = [];
   cells.forEach((cell, i) => {
     const col = Math.floor(i / 7);
@@ -55,56 +51,34 @@ function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
 
   const weeks = Array.from({ length: WEEKS }, (_, w) => cells.slice(w * 7, w * 7 + 7));
 
-  const totalSessions = history.length;
   const streakDays = useMemo(() => {
     let streak = 0;
     const check = new Date(today);
     while (true) {
       const key = `${check.getFullYear()}-${check.getMonth()}-${check.getDate()}`;
-      if (sessionMap[key]) {
-        streak++;
-        check.setDate(check.getDate() - 1);
-      } else {
-        break;
-      }
+      if (sessionMap[key]) { streak++; check.setDate(check.getDate() - 1); }
+      else break;
     }
     return streak;
   }, [sessionMap]);
 
   return (
-    <div className="px-6 mb-6">
-      <div className="rounded-3xl bg-zinc-900/50 border border-zinc-800 p-5">
-        <div className="flex items-baseline justify-between mb-4">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">
-            Consistency
-          </div>
+    <div className="px-4 mb-2">
+      <div className="rounded-2xl bg-zinc-900/50 border border-zinc-800 p-4">
+        <div className="flex items-baseline justify-between mb-3">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">Consistency</div>
           <div className="flex gap-4">
-            {streakDays > 0 && (
-              <div className="text-right">
-                <div className="text-xs font-bold text-emerald-400">{streakDays} day streak</div>
-              </div>
-            )}
-            <div className="text-right">
-              <div className="text-xs text-zinc-500">{totalSessions} total</div>
-            </div>
+            {streakDays > 0 && <div className="text-xs font-bold text-emerald-400">{streakDays} day streak</div>}
+            <div className="text-xs text-zinc-500">{history.length} total</div>
           </div>
         </div>
-
-        {/* Month labels */}
         <div className="flex mb-1 pl-6">
           {Array.from({ length: WEEKS }, (_, w) => {
             const label = monthLabels.find((m) => m.col === w);
-            return (
-              <div key={w} className="flex-1 text-[9px] text-zinc-600 leading-none">
-                {label ? label.label : ''}
-              </div>
-            );
+            return <div key={w} className="flex-1 text-[9px] text-zinc-600 leading-none">{label ? label.label : ''}</div>;
           })}
         </div>
-
-        {/* Grid */}
         <div className="flex gap-0.5">
-          {/* Day labels */}
           <div className="flex flex-col gap-0.5 mr-1">
             {DAYS.map((d, i) => (
               <div key={i} className="h-3.5 w-4 text-[9px] text-zinc-600 flex items-center justify-end pr-1">
@@ -112,45 +86,23 @@ function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
               </div>
             ))}
           </div>
-
-          {/* Week columns */}
           {weeks.map((week, w) => (
             <div key={w} className="flex flex-col gap-0.5 flex-1">
               {week.map((cell, d) => {
                 const color = sessionMap[cell.key];
-                const isToday =
-                  cell.date.getDate() === today.getDate() &&
-                  cell.date.getMonth() === today.getMonth() &&
-                  cell.date.getFullYear() === today.getFullYear();
+                const isToday = cell.date.getDate() === today.getDate() && cell.date.getMonth() === today.getMonth() && cell.date.getFullYear() === today.getFullYear();
                 return (
-                  <div
-                    key={d}
-                    className="rounded-[2px] aspect-square"
-                    style={{
-                      background: cell.isFuture
-                        ? 'transparent'
-                        : color
-                        ? color
-                        : '#27272a',
-                      opacity: cell.isFuture ? 0 : 1,
-                      outline: isToday ? '1.5px solid #a1a1aa' : 'none',
-                      outlineOffset: '1px',
-                    }}
-                    title={cell.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
-                  />
+                  <div key={d} className="rounded-[2px] aspect-square"
+                    style={{ background: cell.isFuture ? 'transparent' : color ? color : '#27272a', opacity: cell.isFuture ? 0 : 1, outline: isToday ? '1.5px solid #a1a1aa' : 'none', outlineOffset: '1px' }} />
                 );
               })}
             </div>
           ))}
         </div>
-
-        {/* Legend */}
         <div className="flex items-center gap-2 mt-3 justify-end">
           <span className="text-[9px] text-zinc-600">Less</span>
           <div className="w-3 h-3 rounded-[2px] bg-zinc-800" />
-          {WORKOUTS.map((w) => (
-            <div key={w.id} className="w-3 h-3 rounded-[2px]" style={{ background: w.color.from }} title={w.name} />
-          ))}
+          {WORKOUTS.map((w) => <div key={w.id} className="w-3 h-3 rounded-[2px]" style={{ background: w.color.from }} />)}
           <span className="text-[9px] text-zinc-600">More</span>
         </div>
       </div>
@@ -158,273 +110,216 @@ function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
   );
 }
 
-function TrendingIcon({ size = 14 }: { size?: number }) {
+// Mini sparkline for the list row
+function Sparkline({ data, color }: { data: number[]; color: string }) {
+  if (data.length < 2) {
+    return <div className="w-16 h-8" />;
+  }
+  const w = 64, h = 32;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const pts = data.map((v, i) => {
+    const x = (i / (data.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return `${x},${y}`;
+  });
+  const pathD = 'M ' + pts.join(' L ');
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" />
-      <polyline points="16 7 22 7 22 13" />
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`}>
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
 
-export function Progress({ history }: Props) {
-  const allExercises = getAllExercises();
-  const [selectedExId, setSelectedExId] = useState<string>(allExercises[0].id);
-  const selectedEx = allExercises.find((e) => e.id === selectedExId)!;
-
-  const exerciseData = useMemo(() => {
-    const data: Array<{
-      date: Date;
-      topWeight: number | null;
-      topReps: number | null;
-      volume: number;
-      totalSets: number;
-    }> = [];
-    [...history].reverse().forEach((session) => {
-      const sets = session.sets.filter((s) => s.exercise_id === selectedExId);
-      if (sets.length > 0) {
-        const topSet = sets.reduce((max, s) =>
-          (s.weight ?? 0) > (max.weight ?? 0) ? s : max
-        );
-        const totalVolume = sets.reduce(
-          (sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0),
-          0
-        );
-        data.push({
-          date: new Date(session.finished_at),
-          topWeight: topSet.weight,
-          topReps: topSet.reps,
-          volume: totalVolume,
-          totalSets: sets.length,
-        });
-      }
-    });
-    return data;
-  }, [history, selectedExId]);
-
-  // chart geometry
-  const chartW = 320;
-  const chartH = 180;
-  const padding = { top: 20, right: 20, bottom: 30, left: 40 };
-  const innerW = chartW - padding.left - padding.right;
-  const innerH = chartH - padding.top - padding.bottom;
-
-  const weights = exerciseData.map((d) => d.topWeight ?? 0);
-  const maxW = Math.max(...weights, 1);
-  const minW = Math.min(...weights, 0);
-  const wRange = maxW - minW || 1;
-
-  const points = exerciseData.map((d, i) => {
-    const x = padding.left + (i / Math.max(exerciseData.length - 1, 1)) * innerW;
-    const y =
-      padding.top + innerH - (((d.topWeight ?? 0) - minW) / wRange) * innerH;
-    return { x, y, d };
-  });
-
+// Full chart for expanded view
+function FullChart({ data, color, exId }: { data: number[]; color: string; exId: string }) {
+  if (data.length < 2) return null;
+  const chartW = 320, chartH = 140;
+  const pad = { top: 16, right: 16, bottom: 24, left: 36 };
+  const iW = chartW - pad.left - pad.right;
+  const iH = chartH - pad.top - pad.bottom;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const range = max - min || 1;
+  const points = data.map((v, i) => ({
+    x: pad.left + (i / (data.length - 1)) * iW,
+    y: pad.top + iH - ((v - min) / range) * iH,
+  }));
   const pathD = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-  const areaD =
-    points.length > 1
-      ? pathD +
-        ` L ${points[points.length - 1].x} ${padding.top + innerH} L ${points[0].x} ${
-          padding.top + innerH
-        } Z`
-      : '';
+  const areaD = pathD + ` L ${points[points.length - 1].x} ${pad.top + iH} L ${points[0].x} ${pad.top + iH} Z`;
+  return (
+    <svg width="100%" viewBox={`0 0 ${chartW} ${chartH}`}>
+      <defs>
+        <linearGradient id={`g-${exId}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[0, 0.5, 1].map((t) => (
+        <line key={t} x1={pad.left} y1={pad.top + iH * t} x2={pad.left + iW} y2={pad.top + iH * t} stroke="#27272a" strokeDasharray="2 4" />
+      ))}
+      {[0, 0.5, 1].map((t) => (
+        <text key={t} x={pad.left - 6} y={pad.top + iH * t + 4} fontSize="9" fill="#52525b" textAnchor="end">
+          {Math.round(min + (1 - t) * range)}
+        </text>
+      ))}
+      <path d={areaD} fill={`url(#g-${exId})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      {points.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#09090b" stroke={color} strokeWidth="1.5" />
+      ))}
+    </svg>
+  );
+}
 
-  const firstW = exerciseData[0]?.topWeight ?? 0;
-  const lastW = exerciseData[exerciseData.length - 1]?.topWeight ?? 0;
-  const trend = lastW - firstW;
-  const trendPct = firstW > 0 ? Math.round((trend / firstW) * 100) : 0;
+interface ExerciseRowData {
+  exercise: Exercise & { workout: Workout };
+  sessions: Array<{ date: string; topWeight: number | null; topReps: number | null; volume: number; totalSets: number }>;
+}
 
-  const peakReps = exerciseData.length > 0
-    ? Math.max(...exerciseData.map((d) => d.topReps ?? 0))
-    : 0;
+function ExerciseRow({ data, expanded, onToggle }: { data: ExerciseRowData; expanded: boolean; onToggle: () => void }) {
+  const { exercise, sessions } = data;
+  const color = exercise.workout.color.from;
+  const weights = sessions.map((s) => s.topWeight ?? 0);
+  const latest = weights[weights.length - 1] ?? null;
+  const first = weights[0] ?? null;
+  const change = latest !== null && first !== null && sessions.length > 1 ? latest - first : null;
+  const changePct = change !== null && first! > 0 ? Math.round((change / first!) * 100) : null;
+  const hasData = sessions.length > 0;
+
+  return (
+    <div className="border-b border-zinc-800/60 last:border-0">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-zinc-900/50 transition-colors"
+      >
+        {/* Left: name + workout */}
+        <div className="flex-1 min-w-0 text-left">
+          <div className="text-sm font-semibold text-zinc-100 leading-tight truncate">{exercise.name}</div>
+          <div className="text-[11px] mt-0.5" style={{ color: exercise.workout.color.text }}>
+            W{exercise.workout.id} · {exercise.workout.short}
+          </div>
+        </div>
+
+        {/* Middle: sparkline */}
+        <div className="shrink-0">
+          {hasData && weights.length > 1
+            ? <Sparkline data={weights} color={change !== null && change >= 0 ? '#22c55e' : '#ef4444'} />
+            : <div className="w-16 h-8 flex items-center justify-center text-[10px] text-zinc-700">no data</div>
+          }
+        </div>
+
+        {/* Right: weight + change */}
+        <div className="text-right shrink-0 w-20">
+          {hasData ? (
+            <>
+              <div className="text-sm font-semibold tabular-nums text-zinc-100">{latest ?? '—'}<span className="text-[10px] text-zinc-500 ml-0.5">kg</span></div>
+              {change !== null && (
+                <div className={`text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded inline-block mt-0.5 ${change >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                  {change >= 0 ? '+' : ''}{change}kg {changePct !== null ? `(${changePct > 0 ? '+' : ''}${changePct}%)` : ''}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className="text-xs text-zinc-600">—</div>
+          )}
+        </div>
+      </button>
+
+      {/* Expanded detail */}
+      {expanded && (
+        <div className="px-4 pb-4 bg-zinc-900/30">
+          {!hasData ? (
+            <div className="py-4 text-center text-zinc-600 text-sm">No sessions logged yet.</div>
+          ) : (
+            <>
+              <FullChart data={weights} color={color} exId={exercise.id} />
+              <div className="grid grid-cols-3 gap-2 mt-3">
+                <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-3 text-center">
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Sessions</div>
+                  <div className="text-xl font-bold">{sessions.length}</div>
+                </div>
+                <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-3 text-center">
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Best</div>
+                  <div className="text-xl font-bold">{Math.max(...weights)}<span className="text-xs text-zinc-500">kg</span></div>
+                </div>
+                <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-3 text-center">
+                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Last</div>
+                  <div className="text-xl font-bold">{sessions[sessions.length - 1].topReps}<span className="text-xs text-zinc-500">reps</span></div>
+                </div>
+              </div>
+              <div className="mt-3 space-y-1">
+                {[...sessions].reverse().slice(0, 5).map((s, i) => (
+                  <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-zinc-900/60 border border-zinc-800/50">
+                    <div className="text-sm font-mono tabular-nums">{s.topWeight ?? 'BW'}kg × {s.topReps}</div>
+                    <div className="text-xs text-zinc-500">{relTime(s.date)}</div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function Progress({ history }: Props) {
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const allExercises = getAllExercises();
+
+  const exerciseData: ExerciseRowData[] = useMemo(() => {
+    return allExercises.map((exercise) => {
+      const sessions: ExerciseRowData['sessions'] = [];
+      [...history].reverse().forEach((session) => {
+        const sets = session.sets.filter((s) => s.exercise_id === exercise.id);
+        if (sets.length > 0) {
+          const topSet = sets.reduce((max, s) => (s.weight ?? 0) > (max.weight ?? 0) ? s : max);
+          const volume = sets.reduce((sum, s) => sum + (s.weight ?? 0) * (s.reps ?? 0), 0);
+          sessions.push({ date: session.finished_at, topWeight: topSet.weight, topReps: topSet.reps, volume, totalSets: sets.length });
+        }
+      });
+      return { exercise, sessions };
+    });
+  }, [history]);
 
   return (
     <div className="min-h-screen pb-28">
-      <div className="px-6 pt-12 pb-6">
-        <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-2">Progress</div>
-        <h1 className="font-display text-5xl leading-none">
-          Are you <span className="italic" style={{ color: selectedEx.workout.color.text }}>
-            winning
-          </span>?
-        </h1>
+      <div className="px-4 pt-12 pb-4">
+        <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-1">Progress</div>
+        <h1 className="text-4xl font-bold leading-tight">Are you winning?</h1>
       </div>
 
       <ConsistencyHeatmap history={history} />
 
-      {/* Exercise picker */}
-      <div className="px-6 mb-4">
-        <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold mb-2">
-          Exercise
-        </div>
-        <select
-          value={selectedExId}
-          onChange={(e) => setSelectedExId(e.target.value)}
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-sm font-medium appearance-none cursor-pointer"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23a1a1aa' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E")`,
-            backgroundRepeat: 'no-repeat',
-            backgroundPosition: 'right 16px center',
-          }}
-        >
-          {WORKOUTS.map((w) => (
-            <optgroup key={w.id} label={`W${w.id} — ${w.name}`}>
-              {w.exercises.map((ex) => (
-                <option key={ex.id} value={ex.id}>
-                  {ex.name}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
-      </div>
-
-      {/* Chart card */}
-      <div className="px-6 mb-4">
-        <div
-          className="rounded-3xl p-6 relative overflow-hidden"
-          style={{
-            background: `linear-gradient(135deg, ${selectedEx.workout.color.bg}80 0%, #18181b 100%)`,
-            border: `1px solid ${selectedEx.workout.color.from}30`,
-          }}
-        >
-          <div
-            className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-2"
-            style={{ color: selectedEx.workout.color.text }}
-          >
-            Top set
-          </div>
-
-          {exerciseData.length === 0 ? (
-            <div className="py-8 text-center">
-              <div className="text-zinc-400 text-sm">No data yet.</div>
-              <div className="text-zinc-600 text-xs mt-1">
-                Log this exercise to see progress.
-              </div>
-            </div>
-          ) : (
-            <>
-              <div className="flex items-baseline gap-3">
-                <div className="font-display text-6xl leading-none">{lastW || '—'}</div>
-                <div className="text-zinc-400 text-lg">kg</div>
-                {trend !== 0 && exerciseData.length > 1 && (
-                  <div
-                    className={`ml-auto flex items-center gap-1 text-sm font-medium ${
-                      trend > 0 ? 'text-emerald-400' : 'text-rose-400'
-                    }`}
-                  >
-                    <TrendingIcon size={14} />
-                    {trend > 0 ? '+' : ''}
-                    {trend}kg ({trendPct > 0 ? '+' : ''}
-                    {trendPct}%)
-                  </div>
-                )}
-              </div>
-
-              {exerciseData.length > 1 && (
-                <svg width="100%" viewBox={`0 0 ${chartW} ${chartH}`} className="mt-4">
-                  <defs>
-                    <linearGradient id={`grad-${selectedExId}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={selectedEx.workout.color.from} stopOpacity="0.4" />
-                      <stop offset="100%" stopColor={selectedEx.workout.color.from} stopOpacity="0" />
-                    </linearGradient>
-                  </defs>
-
-                  {[0, 0.5, 1].map((t) => (
-                    <line
-                      key={t}
-                      x1={padding.left}
-                      y1={padding.top + innerH * t}
-                      x2={padding.left + innerW}
-                      y2={padding.top + innerH * t}
-                      stroke="#27272a"
-                      strokeDasharray="2 4"
-                    />
-                  ))}
-
-                  {[0, 0.5, 1].map((t) => {
-                    const val = minW + (1 - t) * wRange;
-                    return (
-                      <text
-                        key={t}
-                        x={padding.left - 8}
-                        y={padding.top + innerH * t + 4}
-                        fontSize="10"
-                        fill="#71717a"
-                        textAnchor="end"
-                        fontFamily="JetBrains Mono"
-                      >
-                        {Math.round(val)}
-                      </text>
-                    );
-                  })}
-
-                  <path d={areaD} fill={`url(#grad-${selectedExId})`} />
-                  <path
-                    d={pathD}
-                    fill="none"
-                    stroke={selectedEx.workout.color.from}
-                    strokeWidth="2.5"
-                    strokeLinejoin="round"
-                    strokeLinecap="round"
-                  />
-
-                  {points.map((p, i) => (
-                    <circle
-                      key={i}
-                      cx={p.x}
-                      cy={p.y}
-                      r="3.5"
-                      fill="#09090b"
-                      stroke={selectedEx.workout.color.from}
-                      strokeWidth="2"
-                    />
-                  ))}
-                </svg>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {exerciseData.length > 0 && (
-        <>
-          <div className="px-6 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-zinc-900/50 border border-zinc-800 p-4">
-              <div className="text-zinc-500 text-xs mb-1">Sessions</div>
-              <div className="font-display text-3xl">{exerciseData.length}</div>
-            </div>
-            <div className="rounded-2xl bg-zinc-900/50 border border-zinc-800 p-4">
-              <div className="text-zinc-500 text-xs mb-1">Best reps</div>
-              <div className="font-display text-3xl">{peakReps}</div>
-            </div>
-          </div>
-
-          <div className="px-6 mt-8">
-            <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold mb-3">
-              Session history
-            </div>
-            <div className="space-y-2">
-              {[...exerciseData].reverse().map((d, i) => (
-                <div
-                  key={i}
-                  className="flex items-center justify-between py-3 px-4 rounded-xl bg-zinc-900/50 border border-zinc-800"
-                >
-                  <div>
-                    <div className="text-sm font-medium font-mono tabular-nums">
-                      {d.topWeight ?? 'BW'}kg × {d.topReps}
-                    </div>
-                    <div className="text-[11px] text-zinc-500 mt-0.5">
-                      {d.totalSets} sets · {d.volume}kg volume
-                    </div>
-                  </div>
-                  <div className="text-xs text-zinc-500">{relTime(d.date.toISOString())}</div>
+      {/* Exercise list grouped by workout */}
+      <div className="mt-4">
+        {WORKOUTS.map((workout) => {
+          const rows = exerciseData.filter((d) => d.exercise.workout.id === workout.id);
+          return (
+            <div key={workout.id} className="mb-4">
+              {/* Group header */}
+              <div className="px-4 py-2 flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full" style={{ background: workout.color.from }} />
+                <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">
+                  W{workout.id} — {workout.name}
                 </div>
-              ))}
+              </div>
+              <div className="mx-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 overflow-hidden">
+                {rows.map((row) => (
+                  <ExerciseRow
+                    key={row.exercise.id}
+                    data={row}
+                    expanded={expandedId === row.exercise.id}
+                    onToggle={() => setExpandedId(expandedId === row.exercise.id ? null : row.exercise.id)}
+                  />
+                ))}
+              </div>
             </div>
-          </div>
-        </>
-      )}
+          );
+        })}
+      </div>
     </div>
   );
 }
