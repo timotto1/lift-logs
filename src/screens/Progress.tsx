@@ -479,72 +479,82 @@ function AddSessionSheet({ userId, onSaved, onClose }: { userId: string; onSaved
         </div>
 
         {/* Header */}
-        <div className="px-5 pt-2 pb-4 border-b border-zinc-800 shrink-0">
-          <div className="flex items-center justify-between">
+        <div className="px-5 pt-2 pb-4 shrink-0" style={{ borderBottom: '1px solid #222' }}>
+          <div className="flex items-center justify-between mb-4">
             <div className="text-lg font-bold">Log past session</div>
             <button onClick={onClose} className="text-zinc-500 text-sm active:text-zinc-300">Cancel</button>
           </div>
 
-          {/* Date + Workout pickers */}
-          <div className="flex gap-3 mt-4">
-            <div className="flex-1">
-              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Date</div>
-              <input
-                type="date"
-                value={date}
-                max={today}
-                onChange={(e) => setDate(e.target.value)}
-                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-zinc-600 text-zinc-100"
-              />
-            </div>
-            <div className="flex-1">
-              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Workout</div>
-              <div className="flex gap-1">
-                {WORKOUTS.map((w) => (
-                  <button
-                    key={w.id}
-                    onClick={() => switchWorkout(w.id)}
-                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
-                    style={{
-                      background: workoutId === w.id ? w.color.from : '#27272a',
-                      color: workoutId === w.id ? '#000' : '#71717a',
-                    }}
-                  >
-                    {w.id}
-                  </button>
-                ))}
-              </div>
+          {/* Date picker — full width */}
+          <div className="mb-3">
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Date</div>
+            <input
+              type="date"
+              value={date}
+              max={today}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full text-sm px-4 py-3 focus:outline-none text-zinc-100"
+              style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}
+            />
+          </div>
+
+          {/* Workout picker — full width, 2×2 grid */}
+          <div>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Workout</div>
+            <div className="grid grid-cols-2 gap-2">
+              {WORKOUTS.map((w) => (
+                <button
+                  key={w.id}
+                  onClick={() => switchWorkout(w.id)}
+                  className="py-3 text-sm font-bold text-left px-3 transition-all active:opacity-80"
+                  style={{
+                    background: workoutId === w.id ? w.color.from + '20' : '#1a1a1a',
+                    border: `1px solid ${workoutId === w.id ? w.color.from : '#2a2a2a'}`,
+                    borderRadius: 8,
+                    color: workoutId === w.id ? w.color.text : '#555',
+                  }}
+                >
+                  <div className="text-xs font-bold mb-0.5">W{w.id}</div>
+                  <div className="text-[11px] font-normal truncate">{w.name}</div>
+                </button>
+              ))}
             </div>
           </div>
-          <div className="mt-2 text-[11px]" style={{ color: workout.color.text }}>{workout.name}</div>
         </div>
 
         {/* Scrollable exercise list */}
-        <div className="overflow-y-auto flex-1 px-5 py-3 space-y-4">
+        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
           {workout.exercises.map((ex) => (
             <div key={ex.id}>
               <div className="text-xs font-semibold text-zinc-300 mb-2">{ex.name}</div>
-              <div className="space-y-1.5">
+              {/* Grid: set# | kg label+input | × | reps label+input */}
+              <div className="space-y-2">
                 {(setData[ex.id] ?? []).map((s, i) => (
-                  <div key={i} className="flex items-center gap-2">
-                    <div className="text-xs text-zinc-600 w-5 text-center">{i + 1}</div>
-                    <input
-                      type="number"
-                      inputMode="decimal"
-                      value={s.weight}
-                      onChange={(e) => updateCell(ex.id, i, 'weight', e.target.value)}
-                      placeholder="kg"
-                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm font-mono text-center focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
-                    />
-                    <span className="text-xs text-zinc-600">×</span>
-                    <input
-                      type="number"
-                      inputMode="numeric"
-                      value={s.reps}
-                      onChange={(e) => updateCell(ex.id, i, 'reps', e.target.value)}
-                      placeholder="reps"
-                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm font-mono text-center focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
-                    />
+                  <div key={i} className="flex items-center gap-2 w-full">
+                    <div className="text-xs text-zinc-600 w-4 text-center shrink-0">{i + 1}</div>
+                    <div className="flex items-center gap-1 flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
+                      <input
+                        type="number"
+                        inputMode="decimal"
+                        value={s.weight}
+                        onChange={(e) => updateCell(ex.id, i, 'weight', e.target.value)}
+                        placeholder="0"
+                        className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
+                      />
+                      <span className="text-xs text-zinc-600 shrink-0">kg</span>
+                    </div>
+                    <span className="text-xs text-zinc-600 shrink-0">×</span>
+                    <div className="flex items-center gap-1 flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
+                      <input
+                        type="number"
+                        inputMode="numeric"
+                        value={s.reps}
+                        onChange={(e) => updateCell(ex.id, i, 'reps', e.target.value)}
+                        placeholder="0"
+                        className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
+                      />
+                      <span className="text-xs text-zinc-600 shrink-0 pr-2">reps</span>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -553,12 +563,12 @@ function AddSessionSheet({ userId, onSaved, onClose }: { userId: string; onSaved
         </div>
 
         {/* Save button */}
-        <div className="px-5 pt-4 shrink-0" style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 16px), 32px)' }}>
+        <div className="px-5 pt-3 shrink-0" style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 16px), 32px)', borderTop: '1px solid #1e1e1e' }}>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="w-full py-4 rounded-2xl font-bold text-black text-base disabled:opacity-50"
-            style={{ background: workout.color.from }}
+            className="w-full py-3.5 text-sm font-bold disabled:opacity-50 active:opacity-80 transition-opacity"
+            style={{ background: workout.color.from, color: '#000', borderRadius: 8 }}
           >
             {saving ? 'Saving…' : 'Save session'}
           </button>
