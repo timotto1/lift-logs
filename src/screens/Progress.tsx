@@ -1,10 +1,161 @@
 import { useMemo, useState } from 'react';
 import type { SessionWithSets } from '../lib/supabase';
-import { WORKOUTS, getAllExercises } from '../lib/workouts';
+import { WORKOUTS, getAllExercises, getWorkoutById } from '../lib/workouts';
 import { relTime } from '../lib/format';
 
 interface Props {
   history: SessionWithSets[];
+}
+
+const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
+const WEEKS = 16;
+
+function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
+  // Build a map of date string → workout color
+  const sessionMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    history.forEach((s) => {
+      const d = new Date(s.finished_at);
+      const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      const workout = getWorkoutById(s.workout_id);
+      if (workout) map[key] = workout.color.from;
+    });
+    return map;
+  }, [history]);
+
+  // Build grid: 16 weeks × 7 days, ending today
+  const today = new Date();
+  // Align to end of current week (Sunday)
+  const todayDay = today.getDay(); // 0=Sun
+  const daysSinceMonday = (todayDay + 6) % 7; // Mon=0
+  const gridEnd = new Date(today);
+  gridEnd.setDate(today.getDate() + (6 - daysSinceMonday)); // end on Sunday
+
+  const cells: Array<{ date: Date; key: string; isFuture: boolean }> = [];
+  for (let w = WEEKS - 1; w >= 0; w--) {
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(gridEnd);
+      date.setDate(gridEnd.getDate() - w * 7 - (6 - d));
+      const key = `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+      cells.push({ date, key, isFuture: date > today });
+    }
+  }
+
+  // Month labels: find first cell of each month
+  const monthLabels: Array<{ label: string; col: number }> = [];
+  cells.forEach((cell, i) => {
+    const col = Math.floor(i / 7);
+    if (cell.date.getDate() <= 7) {
+      const label = cell.date.toLocaleDateString('en-GB', { month: 'short' });
+      if (!monthLabels.find((m) => m.col === col)) {
+        monthLabels.push({ label, col });
+      }
+    }
+  });
+
+  const weeks = Array.from({ length: WEEKS }, (_, w) => cells.slice(w * 7, w * 7 + 7));
+
+  const totalSessions = history.length;
+  const streakDays = useMemo(() => {
+    let streak = 0;
+    const check = new Date(today);
+    while (true) {
+      const key = `${check.getFullYear()}-${check.getMonth()}-${check.getDate()}`;
+      if (sessionMap[key]) {
+        streak++;
+        check.setDate(check.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [sessionMap]);
+
+  return (
+    <div className="px-6 mb-6">
+      <div className="rounded-3xl bg-zinc-900/50 border border-zinc-800 p-5">
+        <div className="flex items-baseline justify-between mb-4">
+          <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">
+            Consistency
+          </div>
+          <div className="flex gap-4">
+            {streakDays > 0 && (
+              <div className="text-right">
+                <div className="text-xs font-bold text-emerald-400">{streakDays} day streak</div>
+              </div>
+            )}
+            <div className="text-right">
+              <div className="text-xs text-zinc-500">{totalSessions} total</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Month labels */}
+        <div className="flex mb-1 pl-6">
+          {Array.from({ length: WEEKS }, (_, w) => {
+            const label = monthLabels.find((m) => m.col === w);
+            return (
+              <div key={w} className="flex-1 text-[9px] text-zinc-600 leading-none">
+                {label ? label.label : ''}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Grid */}
+        <div className="flex gap-0.5">
+          {/* Day labels */}
+          <div className="flex flex-col gap-0.5 mr-1">
+            {DAYS.map((d, i) => (
+              <div key={i} className="h-3.5 w-4 text-[9px] text-zinc-600 flex items-center justify-end pr-1">
+                {i % 2 === 0 ? d : ''}
+              </div>
+            ))}
+          </div>
+
+          {/* Week columns */}
+          {weeks.map((week, w) => (
+            <div key={w} className="flex flex-col gap-0.5 flex-1">
+              {week.map((cell, d) => {
+                const color = sessionMap[cell.key];
+                const isToday =
+                  cell.date.getDate() === today.getDate() &&
+                  cell.date.getMonth() === today.getMonth() &&
+                  cell.date.getFullYear() === today.getFullYear();
+                return (
+                  <div
+                    key={d}
+                    className="rounded-[2px] aspect-square"
+                    style={{
+                      background: cell.isFuture
+                        ? 'transparent'
+                        : color
+                        ? color
+                        : '#27272a',
+                      opacity: cell.isFuture ? 0 : 1,
+                      outline: isToday ? '1.5px solid #a1a1aa' : 'none',
+                      outlineOffset: '1px',
+                    }}
+                    title={cell.date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                  />
+                );
+              })}
+            </div>
+          ))}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center gap-2 mt-3 justify-end">
+          <span className="text-[9px] text-zinc-600">Less</span>
+          <div className="w-3 h-3 rounded-[2px] bg-zinc-800" />
+          {WORKOUTS.map((w) => (
+            <div key={w.id} className="w-3 h-3 rounded-[2px]" style={{ background: w.color.from }} title={w.name} />
+          ))}
+          <span className="text-[9px] text-zinc-600">More</span>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function TrendingIcon({ size = 14 }: { size?: number }) {
@@ -98,6 +249,8 @@ export function Progress({ history }: Props) {
           </span>?
         </h1>
       </div>
+
+      <ConsistencyHeatmap history={history} />
 
       {/* Exercise picker */}
       <div className="px-6 mb-4">
