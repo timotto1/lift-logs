@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import type { SessionWithSets } from '../lib/supabase';
 import { WORKOUTS, getNextWorkoutId, getWorkoutById, type Workout } from '../lib/workouts';
+import { MOBILITY_ROUTINES, type MobilityRoutine } from '../lib/mobility';
 import { greeting, relTime } from '../lib/format';
 
 interface Props {
   history: SessionWithSets[];
   onStart: (workout: Workout) => void;
+  onStartMobility: (routine: MobilityRoutine) => void;
   onSignOut: () => void;
 }
 
@@ -113,7 +115,7 @@ function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onSta
   );
 }
 
-export function Home({ history, onStart, onSignOut }: Props) {
+export function Home({ history, onStart, onStartMobility, onSignOut }: Props) {
   const [previewing, setPreviewing] = useState<Workout | null>(null);
   const lastId = history[0]?.workout_id ?? null;
   const nextId = getNextWorkoutId(lastId);
@@ -274,6 +276,34 @@ export function Home({ history, onStart, onSignOut }: Props) {
               </button>
             );
           })}
+        </div>
+      </div>
+
+      {/* Mobility routines */}
+      <div className="px-6 mt-8">
+        <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold mb-3">
+          Daily mobility
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          {MOBILITY_ROUTINES.map((routine) => (
+            <button
+              key={routine.id}
+              onClick={() => onStartMobility(routine)}
+              className="rounded-2xl p-4 text-left active:scale-[0.97] transition-transform"
+              style={{
+                background: `linear-gradient(135deg, ${routine.color.bg} 0%, #18181b 100%)`,
+                border: `1px solid ${routine.color.from}40`,
+              }}
+            >
+              <div className="text-lg mb-1">{routine.id === 'morning' ? '🌅' : '🌙'}</div>
+              <div className="text-sm font-semibold text-zinc-100 leading-tight">
+                {routine.id === 'morning' ? 'Morning' : 'Evening'}
+              </div>
+              <div className="text-[11px] mt-1" style={{ color: routine.color.text }}>
+                {routine.totalMinutes} min · {routine.exercises.length} exercises
+              </div>
+            </button>
+          ))}
         </div>
       </div>
 
