@@ -17,7 +17,7 @@ export function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 pt-24 pb-12" style={{ borderTop: '3px solid #fff' }}>
+    <div className="min-h-screen flex flex-col px-6 pt-24 pb-12">
       <div className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8">Lift Log</div>
       <h1 className="text-5xl font-bold leading-none mb-1">Sign in</h1>
       <p className="text-zinc-500 text-sm mb-10">Enter your credentials to continue.</p>

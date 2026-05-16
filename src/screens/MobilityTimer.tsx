@@ -98,9 +98,9 @@ export function MobilityTimer({ routine, onClose }: Props) {
   const circ = 2 * Math.PI * R;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#0f0f0f', borderTop: `3px solid ${routine.color.from}` }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#0f0f0f' }}>
       {/* Header */}
-      <header className="flex items-center gap-3 px-5 pt-12 pb-4" style={{ borderBottom: '1px solid #1a1a1a' }}>
+      <header className="flex items-center gap-3 px-5 pt-12 pb-4">
         <button onClick={onClose} className="active:opacity-60 transition-opacity">
           <ArrowLeftIcon size={20} />
         </button>
@@ -111,7 +111,7 @@ export function MobilityTimer({ routine, onClose }: Props) {
       </header>
 
       {/* Progress segments */}
-      <div className="px-5 py-3 flex gap-1" style={{ borderBottom: '1px solid #1a1a1a' }}>
+      <div className="px-5 py-3 flex gap-1">
         {routine.exercises.map((ex, i) => (
           <div key={ex.id} className="h-0.5 flex-1 transition-all"
             style={{ background: i < currentIdx ? routine.color.from : i === currentIdx ? '#efefef' : '#222' }} />

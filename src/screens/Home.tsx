@@ -11,7 +11,9 @@ interface Props {
   onSignOut: () => void;
 }
 
-function PlayIcon({ size = 16 }: { size?: number }) {
+const CARD: React.CSSProperties = { background: '#161616', border: '1px solid #222', borderRadius: 10 };
+
+function PlayIcon({ size = 14 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor">
       <polygon points="5 3 19 12 5 21 5 3" />
@@ -25,14 +27,14 @@ function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onSta
       <div className="absolute inset-0 bg-black/70" />
       <div
         className="relative flex flex-col"
-        style={{ background: '#111', borderTop: `3px solid ${workout.color.from}` }}
+        style={{ background: '#161616', border: '1px solid #222', borderRadius: '16px 16px 0 0' }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex justify-center pt-3 pb-1">
-          <div className="w-8 h-0.5 bg-zinc-700" />
+        <div className="flex justify-center pt-3 pb-4">
+          <div className="w-8 h-0.5 rounded-full bg-zinc-700" />
         </div>
 
-        <div className="px-6 pt-4 pb-5" style={{ borderBottom: '1px solid #1e1e1e' }}>
+        <div className="px-6 pb-5">
           <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 mb-1">
             Workout {workout.id} · {workout.short}
           </div>
@@ -42,7 +44,7 @@ function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onSta
           </div>
         </div>
 
-        <div className="px-6 py-4 space-y-3 max-h-64 overflow-y-auto" style={{ borderBottom: '1px solid #1e1e1e' }}>
+        <div className="px-6 pb-5 space-y-3 max-h-64 overflow-y-auto">
           {workout.exercises.map((ex, i) => (
             <div key={ex.id} className="flex items-center gap-4">
               <div className="text-[10px] text-zinc-600 w-4 tabular-nums">{String(i + 1).padStart(2, '0')}</div>
@@ -58,7 +60,7 @@ function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onSta
           <button
             onClick={onClose}
             className="flex-1 py-3.5 text-sm font-semibold text-zinc-400 active:text-zinc-200 transition-colors"
-            style={{ background: '#1a1a1a', border: '1px solid #222', borderRadius: 8 }}
+            style={{ background: '#202020', border: '1px solid #2a2a2a', borderRadius: 8 }}
           >
             Back
           </button>
@@ -67,7 +69,7 @@ function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onSta
             className="flex-[2] py-3.5 text-sm font-bold flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
             style={{ background: workout.color.from, color: '#000', borderRadius: 8 }}
           >
-            <PlayIcon size={14} />
+            <PlayIcon size={13} />
             Start Workout
           </button>
         </div>
@@ -98,45 +100,36 @@ export function Home({ history, onStart, onStartMobility, onSignOut }: Props) {
       )}
 
       {/* Header */}
-      <div className="px-5 pt-12 pb-6 flex items-start justify-between" style={{ borderBottom: '1px solid #1a1a1a' }}>
+      <div className="px-5 pt-12 pb-6 flex items-start justify-between">
         <div>
           <div className="text-[10px] uppercase tracking-[0.4em] text-zinc-600 mb-3">Lift Log</div>
-          <h1 className="text-4xl font-bold leading-none">
-            Good {greeting()}
-          </h1>
+          <h1 className="text-4xl font-bold leading-none">Good {greeting()}</h1>
           <div className="text-zinc-600 text-xs mt-2 uppercase tracking-widest">
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
           </div>
         </div>
-        <button
-          onClick={onSignOut}
-          className="text-[10px] uppercase tracking-widest text-zinc-700 mt-1 active:text-zinc-400 transition-colors"
-        >
+        <button onClick={onSignOut} className="text-[10px] uppercase tracking-widest text-zinc-700 mt-1 active:text-zinc-400 transition-colors">
           Sign out
         </button>
       </div>
 
       {/* Next workout */}
-      <div className="px-5 pt-5">
+      <div className="px-5">
         <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 mb-3">Next session</div>
         <button
           onClick={() => setPreviewing(nextWorkout)}
           className="w-full text-left active:opacity-70 transition-opacity"
-          style={{ border: '1px solid #1e1e1e', borderLeft: `3px solid ${nextWorkout.color.from}`, background: '#131313', borderRadius: 8 }}
+          style={CARD}
         >
           <div className="px-5 py-5">
-            <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 mb-2">
-              Workout {nextWorkout.id}
-            </div>
+            <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 mb-2">Workout {nextWorkout.id}</div>
             <div className="text-2xl font-bold leading-tight mb-1">{nextWorkout.name}</div>
             <div className="text-xs text-zinc-500">
               {nextWorkout.exercises.length} exercises · {nextWorkout.exercises.reduce((s, e) => s + e.sets, 0)} sets
             </div>
-          </div>
-          <div style={{ borderTop: '1px solid #1e1e1e' }}>
             <div
-              className="px-5 py-3.5 text-sm font-bold flex items-center gap-2"
-              style={{ color: nextWorkout.color.from }}
+              className="mt-5 py-3 text-sm font-bold flex items-center justify-center gap-2"
+              style={{ background: nextWorkout.color.from, color: '#000', borderRadius: 6 }}
             >
               <PlayIcon size={13} />
               Preview workout
@@ -145,13 +138,13 @@ export function Home({ history, onStart, onStartMobility, onSignOut }: Props) {
         </button>
       </div>
 
-      {/* Stats row */}
-      <div className="px-5 mt-5 grid grid-cols-2 gap-3">
+      {/* Stats */}
+      <div className="px-5 mt-4 grid grid-cols-2 gap-3">
         {[
           { label: 'This week', value: weekCount, unit: 'sessions' },
           { label: 'All time', value: history.length, unit: 'sessions' },
         ].map((stat) => (
-          <div key={stat.label} style={{ background: '#131313', border: '1px solid #1e1e1e', borderRadius: 8 }} className="px-4 py-4">
+          <div key={stat.label} style={CARD} className="px-4 py-4">
             <div className="text-[10px] uppercase tracking-widest text-zinc-600 mb-2">{stat.label}</div>
             <div className="text-3xl font-bold tabular-nums leading-none">
               {stat.value}
@@ -162,34 +155,25 @@ export function Home({ history, onStart, onStartMobility, onSignOut }: Props) {
       </div>
 
       {/* Split rotation */}
-      <div className="px-5 mt-8">
+      <div className="px-5 mt-6">
         <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 mb-3">Split rotation</div>
-        <div style={{ border: '1px solid #1e1e1e', borderRadius: 8, overflow: 'hidden' }}>
+        <div style={{ ...CARD, overflow: 'hidden', padding: 0 }}>
           {WORKOUTS.map((w, i) => {
             const isNext = w.id === nextId;
             return (
               <button
                 key={w.id}
                 onClick={() => setPreviewing(w)}
-                className="w-full flex items-center gap-4 px-5 py-4 text-left active:bg-white/5 transition-colors"
-                style={{
-                  borderBottom: i < WORKOUTS.length - 1 ? '1px solid #1a1a1a' : 'none',
-                  background: isNext ? '#161616' : 'transparent',
-                }}
+                className="w-full flex items-center gap-4 px-5 py-4 text-left active:bg-white/[0.03] transition-colors"
+                style={{ borderBottom: i < WORKOUTS.length - 1 ? '1px solid #1e1e1e' : 'none' }}
               >
-                <div
-                  className="w-0.5 h-8 rounded-full shrink-0"
-                  style={{ background: isNext ? w.color.from : '#222' }}
-                />
+                <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: isNext ? w.color.from : '#333' }} />
                 <div className="flex-1 min-w-0">
-                  <div className={`text-sm font-semibold ${isNext ? 'text-zinc-100' : 'text-zinc-500'}`}>
-                    {w.name}
-                  </div>
+                  <div className={`text-sm font-semibold ${isNext ? 'text-zinc-100' : 'text-zinc-500'}`}>{w.name}</div>
                   <div className="text-[11px] text-zinc-600 mt-0.5">W{w.id} · {w.short}</div>
                 </div>
                 {isNext && (
-                  <div className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 shrink-0"
-                    style={{ color: w.color.from, border: `1px solid ${w.color.from}40`, borderRadius: 4 }}>
+                  <div className="text-[10px] uppercase tracking-widest font-bold shrink-0" style={{ color: w.color.from }}>
                     Next
                   </div>
                 )}
@@ -200,7 +184,7 @@ export function Home({ history, onStart, onStartMobility, onSignOut }: Props) {
       </div>
 
       {/* Daily mobility */}
-      <div className="px-5 mt-8">
+      <div className="px-5 mt-6">
         <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 mb-3">Daily mobility</div>
         <div className="grid grid-cols-2 gap-3">
           {MOBILITY_ROUTINES.map((routine) => (
@@ -208,7 +192,7 @@ export function Home({ history, onStart, onStartMobility, onSignOut }: Props) {
               key={routine.id}
               onClick={() => onStartMobility(routine)}
               className="text-left px-4 py-4 active:opacity-70 transition-opacity"
-              style={{ background: '#131313', border: '1px solid #1e1e1e', borderTop: `2px solid ${routine.color.from}`, borderRadius: 8 }}
+              style={CARD}
             >
               <div className="text-base mb-2">{routine.id === 'morning' ? '🌅' : '🌙'}</div>
               <div className="text-sm font-semibold text-zinc-200">{routine.id === 'morning' ? 'Morning' : 'Evening'}</div>
@@ -220,10 +204,9 @@ export function Home({ history, onStart, onStartMobility, onSignOut }: Props) {
 
       {/* Last session */}
       {lastSession && (
-        <div className="px-5 mt-8 mb-4">
+        <div className="px-5 mt-6 mb-4">
           <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-600 mb-3">Last session</div>
-          <div className="flex items-center justify-between px-4 py-4"
-            style={{ background: '#131313', border: '1px solid #1e1e1e', borderRadius: 8 }}>
+          <div className="flex items-center justify-between px-4 py-4" style={CARD}>
             <div>
               <div className="text-sm font-semibold">{getWorkoutById(lastSession.workout_id)?.name}</div>
               <div className="text-xs text-zinc-600 mt-0.5">{lastSession.sets.length} sets · {lastSession.duration_minutes ?? '—'} min</div>

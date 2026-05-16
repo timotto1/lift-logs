@@ -164,7 +164,7 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
 
   return (
     <div className="min-h-screen pb-32">
-      <header className="sticky top-0 z-30" style={{ background: '#0f0f0f', borderBottom: `2px solid ${workout.color.from}` }}>
+      <header className="sticky top-0 z-30" style={{ background: '#0f0f0f' }}>
         <div className="px-5 pt-10 pb-4">
           <div className="flex items-center gap-3 mb-3">
             <button onClick={onBack} className="active:opacity-60 transition-opacity -ml-0.5">
@@ -200,9 +200,8 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
             <div
               key={ex.id}
               style={{
-                background: isComplete ? '#0d1f0f' : isExpanded ? '#161616' : '#131313',
-                border: `1px solid ${isComplete ? '#1a3d1e' : isExpanded ? '#252525' : '#1a1a1a'}`,
-                borderLeft: `3px solid ${isComplete ? '#22c55e' : isExpanded ? workout.color.from : '#1e1e1e'}`,
+                background: isComplete ? '#0d1f0f' : isExpanded ? '#1a1a1a' : '#161616',
+                border: `1px solid ${isComplete ? '#1a3d1e' : '#222'}`,
                 borderRadius: 8,
               }}
             >
@@ -339,7 +338,7 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
         return (
           <div
             className="fixed bottom-0 left-0 right-0 z-40"
-            style={{ background: '#111', borderTop: `2px solid ${workout.color.from}` }}
+            style={{ background: '#161616', border: '1px solid #222', borderRadius: '12px 12px 0 0' }}
           >
             <div className="px-5 py-3 flex items-center gap-4">
               <div className="flex-1">
@@ -382,7 +381,7 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
       {/* Confirm finish modal */}
       {showConfirm && (
         <div className="fixed inset-0 z-50 flex items-end justify-center p-0" style={{ background: 'rgba(0,0,0,0.8)' }}>
-          <div className="w-full p-5" style={{ background: '#111', borderTop: '1px solid #222' }}>
+          <div className="w-full p-5" style={{ background: '#161616', border: '1px solid #222', borderRadius: '12px 12px 0 0' }}>
             <div className="text-lg font-bold mb-1">Save this session?</div>
             <div className="text-zinc-500 text-sm mb-5">
               {doneSets} of {totalSets} sets · {elapsedMin} min
