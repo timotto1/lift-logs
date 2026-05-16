@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { SessionWithSets } from '../lib/supabase';
 import { WORKOUTS, getNextWorkoutId, getWorkoutById, type Workout } from '../lib/workouts';
 import { greeting, relTime } from '../lib/format';
@@ -33,7 +34,87 @@ function TrendingIcon({ size = 14 }: { size?: number }) {
   );
 }
 
+function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onStart: () => void; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative rounded-t-3xl overflow-hidden"
+        style={{ background: '#111113', border: `1px solid ${workout.color.from}30` }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-zinc-700" />
+        </div>
+
+        {/* Header */}
+        <div className="px-6 pt-3 pb-4" style={{ borderBottom: '1px solid #27272a' }}>
+          <div
+            className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-1"
+            style={{ color: workout.color.text }}
+          >
+            Workout {workout.id} · {workout.short}
+          </div>
+          <div className="font-display text-3xl leading-tight">
+            {workout.name.split(' / ').map((part, i, arr) => (
+              <span key={i}>
+                {part}
+                {i < arr.length - 1 && (
+                  <span style={{ color: workout.color.text, opacity: 0.5 }}> / </span>
+                )}
+              </span>
+            ))}
+          </div>
+          <div className="text-zinc-500 text-sm mt-1">
+            {workout.exercises.length} exercises · {workout.exercises.reduce((sum, ex) => sum + ex.sets, 0)} sets
+          </div>
+        </div>
+
+        {/* Exercise list */}
+        <div className="px-6 py-4 space-y-3 max-h-72 overflow-y-auto">
+          {workout.exercises.map((ex, i) => (
+            <div key={ex.id} className="flex items-center gap-3">
+              <div
+                className="w-6 h-6 rounded-full flex items-center justify-center text-[11px] font-bold shrink-0"
+                style={{ background: workout.color.from + '20', color: workout.color.text }}
+              >
+                {i + 1}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm text-zinc-100 truncate">{ex.name}</div>
+                <div className="text-[11px] text-zinc-500">
+                  {ex.sets} sets · {ex.reps} reps · {ex.rest}s rest
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="px-6 pb-10 pt-4 flex gap-3" style={{ borderTop: '1px solid #27272a' }}>
+          <button
+            onClick={onClose}
+            className="flex-1 py-4 rounded-2xl bg-zinc-900 text-zinc-300 font-bold active:scale-[0.98] transition-transform"
+          >
+            Back
+          </button>
+          <button
+            onClick={onStart}
+            className="flex-[2] py-4 rounded-2xl font-bold flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
+            style={{ background: workout.color.from, color: '#000' }}
+          >
+            <PlayIcon size={16} />
+            Start Workout
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Home({ history, onStart, onSignOut }: Props) {
+  const [previewing, setPreviewing] = useState(false);
   const lastId = history[0]?.workout_id ?? null;
   const nextId = getNextWorkoutId(lastId);
   const nextWorkout = getWorkoutById(nextId)!;
@@ -45,6 +126,14 @@ export function Home({ history, onStart, onSignOut }: Props) {
 
   return (
     <div className="min-h-screen pb-28">
+      {previewing && (
+        <WorkoutPreview
+          workout={nextWorkout}
+          onStart={() => { setPreviewing(false); onStart(nextWorkout); }}
+          onClose={() => setPreviewing(false)}
+        />
+      )}
+
       <div className="px-6 pt-12 pb-8 flex items-start justify-between">
         <div>
           <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-2">Lift Log</div>
@@ -73,7 +162,7 @@ export function Home({ history, onStart, onSignOut }: Props) {
       {/* Hero: next workout */}
       <div className="px-6">
         <button
-          onClick={() => onStart(nextWorkout)}
+          onClick={() => setPreviewing(true)}
           className="relative w-full rounded-3xl p-7 overflow-hidden active:scale-[0.98] transition-transform text-left"
           style={{
             background: `linear-gradient(135deg, ${nextWorkout.color.bg} 0%, #18181b 100%)`,
@@ -116,7 +205,7 @@ export function Home({ history, onStart, onSignOut }: Props) {
               style={{ background: nextWorkout.color.from, color: '#000' }}
             >
               <PlayIcon size={18} />
-              Start Workout
+              Preview Workout
             </div>
           </div>
         </button>
