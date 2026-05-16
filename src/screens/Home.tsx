@@ -92,7 +92,7 @@ function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onSta
         </div>
 
         {/* Actions */}
-        <div className="px-6 pb-10 pt-4 flex gap-3" style={{ borderTop: '1px solid #27272a' }}>
+        <div className="px-6 pt-4 flex gap-3" style={{ borderTop: '1px solid #27272a', paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 80px), 96px)' }}>
           <button
             onClick={onClose}
             className="flex-1 py-4 rounded-2xl bg-zinc-900 text-zinc-300 font-bold active:scale-[0.98] transition-transform"
@@ -114,7 +114,7 @@ function WorkoutPreview({ workout, onStart, onClose }: { workout: Workout; onSta
 }
 
 export function Home({ history, onStart, onSignOut }: Props) {
-  const [previewing, setPreviewing] = useState(false);
+  const [previewing, setPreviewing] = useState<Workout | null>(null);
   const lastId = history[0]?.workout_id ?? null;
   const nextId = getNextWorkoutId(lastId);
   const nextWorkout = getWorkoutById(nextId)!;
@@ -128,9 +128,9 @@ export function Home({ history, onStart, onSignOut }: Props) {
     <div className="min-h-screen pb-28">
       {previewing && (
         <WorkoutPreview
-          workout={nextWorkout}
-          onStart={() => { setPreviewing(false); onStart(nextWorkout); }}
-          onClose={() => setPreviewing(false)}
+          workout={previewing}
+          onStart={() => { const w = previewing; setPreviewing(null); onStart(w); }}
+          onClose={() => setPreviewing(null)}
         />
       )}
 
@@ -162,7 +162,7 @@ export function Home({ history, onStart, onSignOut }: Props) {
       {/* Hero: next workout */}
       <div className="px-6">
         <button
-          onClick={() => setPreviewing(true)}
+          onClick={() => setPreviewing(nextWorkout)}
           className="relative w-full rounded-3xl p-7 overflow-hidden active:scale-[0.98] transition-transform text-left"
           style={{
             background: `linear-gradient(135deg, ${nextWorkout.color.bg} 0%, #18181b 100%)`,
@@ -244,9 +244,10 @@ export function Home({ history, onStart, onSignOut }: Props) {
           {WORKOUTS.map((w) => {
             const isNext = w.id === nextId;
             return (
-              <div
+              <button
                 key={w.id}
-                className={`rounded-xl border p-3.5 flex items-center gap-3 transition-all ${
+                onClick={() => setPreviewing(w)}
+                className={`w-full rounded-xl border p-3.5 flex items-center gap-3 transition-all active:scale-[0.98] ${
                   isNext ? 'border-zinc-700 bg-zinc-900' : 'border-zinc-900 bg-zinc-950/50'
                 }`}
               >
@@ -270,7 +271,7 @@ export function Home({ history, onStart, onSignOut }: Props) {
                     Next
                   </span>
                 )}
-              </div>
+              </button>
             );
           })}
         </div>
