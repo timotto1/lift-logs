@@ -3,25 +3,21 @@ import { supabase } from '../lib/supabase';
 
 export function SignIn() {
   const [email, setEmail] = useState('');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [password, setPassword] = useState('');
+  const [status, setStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const sendLink = async (e: React.FormEvent) => {
+  const signIn = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || status === 'sending') return;
-    setStatus('sending');
+    if (status === 'loading') return;
+    setStatus('loading');
     setErrorMsg(null);
 
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: window.location.origin },
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setStatus('error');
       setErrorMsg(error.message);
-    } else {
-      setStatus('sent');
     }
   };
 
@@ -32,39 +28,37 @@ export function SignIn() {
         Welcome <span className="italic text-rose-300">back</span>
       </h1>
       <p className="text-zinc-500 text-sm mb-12">
-        Sign in with a magic link. No passwords, no faff.
+        Sign in to your account.
       </p>
 
-      {status !== 'sent' ? (
-        <form onSubmit={sendLink} className="space-y-3">
-          <input
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            autoComplete="email"
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-base focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
-          />
-          <button
-            type="submit"
-            disabled={status === 'sending' || !email}
-            className="w-full py-4 rounded-xl bg-zinc-100 text-zinc-950 font-bold disabled:bg-zinc-800 disabled:text-zinc-600 active:scale-[0.98] transition-transform"
-          >
-            {status === 'sending' ? 'Sending…' : 'Send magic link'}
-          </button>
-          {errorMsg && <div className="text-rose-400 text-sm mt-2">{errorMsg}</div>}
-        </form>
-      ) : (
-        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6">
-          <div className="text-2xl mb-2">✉️</div>
-          <div className="font-medium text-zinc-100 mb-1">Check your email</div>
-          <div className="text-sm text-zinc-500">
-            We sent a sign-in link to <span className="text-zinc-300">{email}</span>. Tap the link
-            from your phone and you'll be in.
-          </div>
-        </div>
-      )}
+      <form onSubmit={signIn} className="space-y-3">
+        <input
+          type="email"
+          required
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="you@example.com"
+          autoComplete="email"
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-base focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
+        />
+        <input
+          type="password"
+          required
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          autoComplete="current-password"
+          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-base focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
+        />
+        <button
+          type="submit"
+          disabled={status === 'loading' || !email || !password}
+          className="w-full py-4 rounded-xl bg-zinc-100 text-zinc-950 font-bold disabled:bg-zinc-800 disabled:text-zinc-600 active:scale-[0.98] transition-transform"
+        >
+          {status === 'loading' ? 'Signing in…' : 'Sign in'}
+        </button>
+        {errorMsg && <div className="text-rose-400 text-sm mt-2">{errorMsg}</div>}
+      </form>
     </div>
   );
 }
