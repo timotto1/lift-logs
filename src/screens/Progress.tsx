@@ -2,11 +2,12 @@ import { useMemo, useState } from 'react';
 import type { SessionWithSets, SetLog } from '../lib/supabase';
 import { WORKOUTS, getAllExercises, getWorkoutById, type Exercise, type Workout } from '../lib/workouts';
 import { relTime } from '../lib/format';
-import { updateSetLog, deleteSession } from '../hooks/useHistory';
+import { updateSetLog, deleteSession, saveSession } from '../hooks/useHistory';
 
 interface Props {
   history: SessionWithSets[];
   onRefetch: () => Promise<void>;
+  userId: string;
 }
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
@@ -414,31 +415,198 @@ function SessionCard({ session, onDeleted, onSaved }: { session: SessionWithSets
   );
 }
 
-function HistoryView({ history, onRefetch }: { history: SessionWithSets[]; onRefetch: () => Promise<void> }) {
-  if (history.length === 0) {
-    return (
-      <div className="px-4 py-16 text-center">
-        <div className="text-zinc-600 text-sm">No sessions logged yet.</div>
-        <div className="text-zinc-700 text-xs mt-1">Finish a workout to see it here.</div>
-      </div>
-    );
-  }
+function AddSessionSheet({ userId, onSaved, onClose }: { userId: string; onSaved: () => Promise<void>; onClose: () => void }) {
+  const today = new Date().toISOString().slice(0, 10);
+  const [date, setDate] = useState(today);
+  const [workoutId, setWorkoutId] = useState<number>(1);
+  const [saving, setSaving] = useState(false);
+
+  const workout = WORKOUTS.find((w) => w.id === workoutId)!;
+
+  // set data: exId -> array of { weight, reps }
+  const [setData, setSetData] = useState<Record<string, Array<{ weight: string; reps: string }>>>(() => {
+    const init: Record<string, Array<{ weight: string; reps: string }>> = {};
+    WORKOUTS[0].exercises.forEach((ex) => { init[ex.id] = Array.from({ length: ex.sets }, () => ({ weight: '', reps: '' })); });
+    return init;
+  });
+
+  // Reinitialise set data when workout changes
+  const switchWorkout = (id: number) => {
+    setWorkoutId(id);
+    const w = WORKOUTS.find((w) => w.id === id)!;
+    const init: Record<string, Array<{ weight: string; reps: string }>> = {};
+    w.exercises.forEach((ex) => { init[ex.id] = Array.from({ length: ex.sets }, () => ({ weight: '', reps: '' })); });
+    setSetData(init);
+  };
+
+  const updateCell = (exId: string, idx: number, field: 'weight' | 'reps', val: string) => {
+    setSetData((prev) => ({
+      ...prev,
+      [exId]: prev[exId].map((s, i) => i === idx ? { ...s, [field]: val } : s),
+    }));
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    const sets: Array<{ exercise_id: string; set_number: number; weight: number | null; reps: number | null }> = [];
+    workout.exercises.forEach((ex) => {
+      (setData[ex.id] ?? []).forEach((s, i) => {
+        if (s.weight || s.reps) {
+          sets.push({ exercise_id: ex.id, set_number: i + 1, weight: s.weight ? parseFloat(s.weight) : null, reps: s.reps ? parseInt(s.reps) : null });
+        }
+      });
+    });
+    if (sets.length === 0) { setSaving(false); return; }
+    const dt = new Date(date);
+    const iso = dt.toISOString();
+    const { error } = await saveSession({ userId, workoutId, startedAt: iso, finishedAt: iso, durationMinutes: 0, sets });
+    if (error) { alert(`Couldn't save: ${error}`); setSaving(false); return; }
+    await onSaved();
+    onClose();
+  };
 
   return (
-    <div className="px-4 space-y-3 mt-2">
-      {history.map((session) => (
-        <SessionCard
-          key={session.id}
-          session={session}
-          onDeleted={onRefetch}
-          onSaved={onRefetch}
-        />
-      ))}
+    <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+      <div
+        className="relative bg-zinc-950 rounded-t-3xl border-t border-zinc-800 flex flex-col"
+        style={{ maxHeight: '90vh' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Handle */}
+        <div className="flex justify-center pt-3 pb-1 shrink-0">
+          <div className="w-10 h-1 rounded-full bg-zinc-700" />
+        </div>
+
+        {/* Header */}
+        <div className="px-5 pt-2 pb-4 border-b border-zinc-800 shrink-0">
+          <div className="flex items-center justify-between">
+            <div className="text-lg font-bold">Log past session</div>
+            <button onClick={onClose} className="text-zinc-500 text-sm active:text-zinc-300">Cancel</button>
+          </div>
+
+          {/* Date + Workout pickers */}
+          <div className="flex gap-3 mt-4">
+            <div className="flex-1">
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Date</div>
+              <input
+                type="date"
+                value={date}
+                max={today}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-zinc-600 text-zinc-100"
+              />
+            </div>
+            <div className="flex-1">
+              <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Workout</div>
+              <div className="flex gap-1">
+                {WORKOUTS.map((w) => (
+                  <button
+                    key={w.id}
+                    onClick={() => switchWorkout(w.id)}
+                    className="flex-1 py-2.5 rounded-xl text-sm font-bold transition-all"
+                    style={{
+                      background: workoutId === w.id ? w.color.from : '#27272a',
+                      color: workoutId === w.id ? '#000' : '#71717a',
+                    }}
+                  >
+                    {w.id}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="mt-2 text-[11px]" style={{ color: workout.color.text }}>{workout.name}</div>
+        </div>
+
+        {/* Scrollable exercise list */}
+        <div className="overflow-y-auto flex-1 px-5 py-3 space-y-4">
+          {workout.exercises.map((ex) => (
+            <div key={ex.id}>
+              <div className="text-xs font-semibold text-zinc-300 mb-2">{ex.name}</div>
+              <div className="space-y-1.5">
+                {(setData[ex.id] ?? []).map((s, i) => (
+                  <div key={i} className="flex items-center gap-2">
+                    <div className="text-xs text-zinc-600 w-5 text-center">{i + 1}</div>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      value={s.weight}
+                      onChange={(e) => updateCell(ex.id, i, 'weight', e.target.value)}
+                      placeholder="kg"
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm font-mono text-center focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
+                    />
+                    <span className="text-xs text-zinc-600">×</span>
+                    <input
+                      type="number"
+                      inputMode="numeric"
+                      value={s.reps}
+                      onChange={(e) => updateCell(ex.id, i, 'reps', e.target.value)}
+                      placeholder="reps"
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-lg px-3 py-2 text-sm font-mono text-center focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Save button */}
+        <div className="px-5 pt-4 shrink-0" style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 24px)' }}>
+          <button
+            onClick={handleSave}
+            disabled={saving}
+            className="w-full py-4 rounded-2xl font-bold text-black text-base disabled:opacity-50"
+            style={{ background: workout.color.from }}
+          >
+            {saving ? 'Saving…' : 'Save session'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
 
-export function Progress({ history, onRefetch }: Props) {
+function HistoryView({ history, onRefetch, userId }: { history: SessionWithSets[]; onRefetch: () => Promise<void>; userId: string }) {
+  const [showAdd, setShowAdd] = useState(false);
+
+  return (
+    <>
+      {showAdd && (
+        <AddSessionSheet userId={userId} onSaved={onRefetch} onClose={() => setShowAdd(false)} />
+      )}
+      <div className="px-4 mt-2">
+        <button
+          onClick={() => setShowAdd(true)}
+          className="w-full py-3.5 text-sm font-bold active:opacity-70 transition-opacity mb-4"
+          style={{ background: '#efefef', color: '#0f0f0f', borderRadius: 8 }}
+        >
+          + Add past session
+        </button>
+        {history.length === 0 ? (
+          <div className="py-12 text-center">
+            <div className="text-zinc-600 text-sm">No sessions logged yet.</div>
+            <div className="text-zinc-700 text-xs mt-1">Finish a workout to see it here.</div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {history.map((session) => (
+              <SessionCard
+                key={session.id}
+                session={session}
+                onDeleted={onRefetch}
+                onSaved={onRefetch}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+export function Progress({ history, onRefetch, userId }: Props) {
   const [tab, setTab] = useState<'exercises' | 'history'>('exercises');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const allExercises = getAllExercises();
@@ -491,7 +659,7 @@ export function Progress({ history, onRefetch }: Props) {
       )}
 
       {tab === 'history' && (
-        <HistoryView history={history} onRefetch={onRefetch} />
+        <HistoryView history={history} onRefetch={onRefetch} userId={userId} />
       )}
 
       {/* Exercise list grouped by workout */}
