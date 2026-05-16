@@ -78,15 +78,14 @@ export function MobilityTimer({ routine, onClose }: Props) {
   // Finished screen
   if (finished) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-8 text-center"
-        style={{ background: routine.color.bg }}>
-        <div className="text-6xl mb-6">🙌</div>
-        <div className="text-4xl font-bold mb-2">Done!</div>
-        <div className="text-zinc-400 mb-10">{routine.name} complete · {routine.totalMinutes} min</div>
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-8 text-center" style={{ background: '#0f0f0f' }}>
+        <div className="text-5xl mb-6">✓</div>
+        <div className="text-3xl font-bold mb-2">Done</div>
+        <div className="text-zinc-500 text-sm mb-10">{routine.name} · {routine.totalMinutes} min</div>
         <button
           onClick={onClose}
-          className="w-full max-w-xs py-4 rounded-2xl font-bold text-black"
-          style={{ background: routine.color.from }}
+          className="w-full max-w-xs py-3.5 text-sm font-bold"
+          style={{ background: '#efefef', color: '#0f0f0f', borderRadius: 8 }}
         >
           Back to Home
         </button>
@@ -99,39 +98,23 @@ export function MobilityTimer({ routine, onClose }: Props) {
   const circ = 2 * Math.PI * R;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#09090b' }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#0f0f0f', borderTop: `3px solid ${routine.color.from}` }}>
       {/* Header */}
-      <header className="flex items-center gap-3 px-5 pt-12 pb-4">
-        <button
-          onClick={onClose}
-          className="p-1.5 -ml-1.5 rounded-lg active:bg-zinc-800"
-        >
+      <header className="flex items-center gap-3 px-5 pt-12 pb-4" style={{ borderBottom: '1px solid #1a1a1a' }}>
+        <button onClick={onClose} className="active:opacity-60 transition-opacity">
           <ArrowLeftIcon size={20} />
         </button>
         <div className="flex-1">
-          <div className="text-[10px] uppercase tracking-[0.25em] font-semibold" style={{ color: routine.color.text }}>
-            {routine.name}
-          </div>
-          <div className="text-sm font-medium text-zinc-300">
-            {currentIdx + 1} / {routine.exercises.length}
-          </div>
+          <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">{routine.name}</div>
+          <div className="text-sm font-semibold">{currentIdx + 1} / {routine.exercises.length}</div>
         </div>
       </header>
 
-      {/* Exercise list — scrollable context */}
-      <div className="px-5 mb-4 flex gap-1.5">
+      {/* Progress segments */}
+      <div className="px-5 py-3 flex gap-1" style={{ borderBottom: '1px solid #1a1a1a' }}>
         {routine.exercises.map((ex, i) => (
-          <div
-            key={ex.id}
-            className="h-1 rounded-full flex-1 transition-all"
-            style={{
-              background: i < currentIdx
-                ? routine.color.from
-                : i === currentIdx
-                ? routine.color.text
-                : '#27272a',
-            }}
-          />
+          <div key={ex.id} className="h-0.5 flex-1 transition-all"
+            style={{ background: i < currentIdx ? routine.color.from : i === currentIdx ? '#efefef' : '#222' }} />
         ))}
       </div>
 
@@ -173,32 +156,29 @@ export function MobilityTimer({ routine, onClose }: Props) {
         </div>
 
         {/* Controls */}
-        <div className="w-full max-w-xs space-y-3">
+        <div className="w-full max-w-xs space-y-2">
           {!started ? (
             <button
               onClick={() => startExercise(0)}
-              className="w-full py-4 rounded-2xl font-bold text-black text-base"
-              style={{ background: routine.color.from }}
+              className="w-full py-3.5 text-sm font-bold active:opacity-80 transition-opacity"
+              style={{ background: routine.color.from, color: '#000', borderRadius: 8 }}
             >
               Start
             </button>
           ) : (
             <button
               onClick={goNext}
-              className="w-full py-4 rounded-2xl font-bold text-black text-base flex items-center justify-center gap-2"
-              style={{ background: routine.color.from }}
+              className="w-full py-3.5 text-sm font-bold flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
+              style={{ background: routine.color.from, color: '#000', borderRadius: 8 }}
             >
-              {isLast ? (
-                <><CheckIcon size={18} /> Finish</>
-              ) : (
-                <>Next: {routine.exercises[currentIdx + 1].name}</>
-              )}
+              {isLast ? <><CheckIcon size={16} /> Finish</> : <>Skip →</>}
             </button>
           )}
           {started && (
             <button
               onClick={() => setEndsAt(endsAt ? endsAt + 30000 : null)}
-              className="w-full py-3 rounded-2xl font-semibold bg-zinc-900 text-zinc-300 text-sm"
+              className="w-full py-3 text-sm font-semibold text-zinc-400 active:text-zinc-200 transition-colors"
+              style={{ background: '#161616', border: '1px solid #222', borderRadius: 8 }}
             >
               +30 seconds
             </button>
@@ -208,15 +188,11 @@ export function MobilityTimer({ routine, onClose }: Props) {
 
       {/* Up next */}
       {started && !isLast && (
-        <div className="px-5 pb-12">
-          <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-4 flex items-center gap-3">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 shrink-0">Up next</div>
-            <div className="text-sm font-medium text-zinc-300 truncate">
-              {routine.exercises[currentIdx + 1].name}
-            </div>
-            <div className="ml-auto text-xs text-zinc-600 shrink-0">
-              {fmtTime(routine.exercises[currentIdx + 1].duration)}
-            </div>
+        <div className="px-5 pb-10">
+          <div className="flex items-center gap-3 px-4 py-3.5" style={{ background: '#131313', border: '1px solid #1e1e1e', borderRadius: 8 }}>
+            <div className="text-[10px] uppercase tracking-widest text-zinc-600 shrink-0">Up next</div>
+            <div className="text-sm text-zinc-400 truncate">{routine.exercises[currentIdx + 1].name}</div>
+            <div className="ml-auto text-xs text-zinc-600 shrink-0 tabular-nums">{fmtTime(routine.exercises[currentIdx + 1].duration)}</div>
           </div>
         </div>
       )}

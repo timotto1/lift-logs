@@ -164,40 +164,26 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
 
   return (
     <div className="min-h-screen pb-32">
-      <header className="sticky top-0 z-30 bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-        <div className="px-5 pt-4 pb-4">
+      <header className="sticky top-0 z-30" style={{ background: '#0f0f0f', borderBottom: `2px solid ${workout.color.from}` }}>
+        <div className="px-5 pt-10 pb-4">
           <div className="flex items-center gap-3 mb-3">
-            <button onClick={onBack} className="p-1.5 -ml-1.5 rounded-lg active:bg-zinc-800">
+            <button onClick={onBack} className="active:opacity-60 transition-opacity -ml-0.5">
               <ArrowLeftIcon size={20} />
             </button>
             <div className="flex-1">
-              <div
-                className="text-[10px] uppercase tracking-[0.25em] font-semibold mb-0.5"
-                style={{ color: workout.color.text }}
-              >
-                Workout {workout.id}
-              </div>
-              <div className="font-display text-2xl leading-none">{workout.name}</div>
+              <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 mb-0.5">Workout {workout.id}</div>
+              <div className="text-xl font-bold leading-none">{workout.name}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-zinc-500">Elapsed</div>
-              <div className="text-base font-mono font-semibold tabular-nums">{elapsedMin}m</div>
+              <div className="text-[10px] uppercase tracking-widest text-zinc-600">Elapsed</div>
+              <div className="text-sm font-mono font-bold tabular-nums">{elapsedMin}m</div>
             </div>
           </div>
-
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full transition-all duration-500"
-                style={{
-                  width: `${pct}%`,
-                  background: `linear-gradient(90deg, ${workout.color.from}, ${workout.color.to})`,
-                }}
-              />
+            <div className="flex-1 h-px" style={{ background: '#1e1e1e' }}>
+              <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, background: workout.color.from }} />
             </div>
-            <div className="text-xs font-mono tabular-nums text-zinc-400 w-12 text-right">
-              {doneSets}/{totalSets}
-            </div>
+            <div className="text-xs font-mono tabular-nums text-zinc-500 shrink-0">{doneSets}/{totalSets}</div>
           </div>
         </div>
       </header>
@@ -213,23 +199,23 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
           return (
             <div
               key={ex.id}
-              className={`rounded-2xl border transition-colors ${
-                isComplete
-                  ? 'bg-emerald-950/30 border-emerald-900/50'
-                  : isExpanded
-                  ? 'bg-zinc-900 border-zinc-700'
-                  : 'bg-zinc-900/50 border-zinc-800'
-              }`}
+              style={{
+                background: isComplete ? '#0d1f0f' : isExpanded ? '#161616' : '#131313',
+                border: `1px solid ${isComplete ? '#1a3d1e' : isExpanded ? '#252525' : '#1a1a1a'}`,
+                borderLeft: `3px solid ${isComplete ? '#22c55e' : isExpanded ? workout.color.from : '#1e1e1e'}`,
+                borderRadius: 8,
+              }}
             >
               <button
                 onClick={() => setExpanded(isExpanded ? null : ex.id)}
                 className="w-full flex items-center gap-3 p-4 text-left"
               >
                 <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center shrink-0 font-bold text-sm"
+                  className="w-8 h-8 flex items-center justify-center shrink-0 font-bold text-sm"
                   style={{
-                    background: isComplete ? '#10b981' : '#27272a',
-                    color: isComplete ? '#022c22' : '#d4d4d8',
+                    background: isComplete ? '#22c55e' : '#1e1e1e',
+                    color: isComplete ? '#0a1f0c' : '#555',
+                    borderRadius: 6,
                   }}
                 >
                   {isComplete ? <CheckIcon size={18} /> : exIdx + 1}
@@ -336,10 +322,11 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
         <button
           onClick={() => setShowConfirm(true)}
           disabled={doneSets === 0}
-          className="w-full mt-4 py-4 rounded-xl font-bold text-base active:scale-[0.98] transition-transform disabled:bg-zinc-800 disabled:text-zinc-600"
+          className="w-full mt-4 py-3.5 text-sm font-bold active:opacity-80 transition-opacity disabled:opacity-30"
           style={{
-            background: doneSets === 0 ? undefined : workout.color.from,
-            color: doneSets === 0 ? undefined : '#000',
+            background: doneSets === 0 ? '#1a1a1a' : workout.color.from,
+            color: doneSets === 0 ? '#555' : '#000',
+            borderRadius: 8,
           }}
         >
           Finish Session
@@ -351,8 +338,8 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
         const secondsLeft = Math.max(0, Math.round((timer.endsAt - Date.now()) / 1000));
         return (
           <div
-            className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-900 border-t shadow-2xl"
-            style={{ borderColor: workout.color.from + '50' }}
+            className="fixed bottom-0 left-0 right-0 z-40"
+            style={{ background: '#111', borderTop: `2px solid ${workout.color.from}` }}
           >
             <div className="px-5 py-3 flex items-center gap-4">
               <div className="flex-1">
@@ -394,26 +381,26 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
 
       {/* Confirm finish modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 bg-zinc-950/90 backdrop-blur flex items-end sm:items-center justify-center p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-3xl p-6 w-full max-w-sm">
-            <div className="font-display text-3xl mb-2">Save this session?</div>
-            <div className="text-zinc-400 text-sm mb-6">
-              {doneSets} of {totalSets} sets logged in {elapsedMin} minutes. Next time, beat at least
-              one set.
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0" style={{ background: 'rgba(0,0,0,0.8)' }}>
+          <div className="w-full p-5" style={{ background: '#111', borderTop: '1px solid #222' }}>
+            <div className="text-lg font-bold mb-1">Save this session?</div>
+            <div className="text-zinc-500 text-sm mb-5">
+              {doneSets} of {totalSets} sets · {elapsedMin} min
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowConfirm(false)}
                 disabled={saving}
-                className="flex-1 py-3 rounded-xl bg-zinc-800 text-zinc-300 font-medium active:scale-[0.98] transition-transform"
+                className="flex-1 py-3.5 text-sm font-semibold text-zinc-400 active:text-zinc-200 transition-colors"
+                style={{ background: '#1a1a1a', border: '1px solid #222', borderRadius: 8 }}
               >
                 Keep going
               </button>
               <button
                 onClick={handleConfirmFinish}
                 disabled={saving}
-                className="flex-[2] py-3 rounded-xl font-bold disabled:opacity-60 active:scale-[0.98] transition-transform"
-                style={{ background: workout.color.from, color: '#000' }}
+                className="flex-[2] py-3.5 text-sm font-bold disabled:opacity-50 active:opacity-80 transition-opacity"
+                style={{ background: workout.color.from, color: '#000', borderRadius: 8 }}
               >
                 {saving ? 'Saving…' : 'Save & finish'}
               </button>

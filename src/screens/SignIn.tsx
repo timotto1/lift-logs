@@ -12,34 +12,26 @@ export function SignIn() {
     if (status === 'loading') return;
     setStatus('loading');
     setErrorMsg(null);
-
     const { error } = await supabase.auth.signInWithPassword({ email, password });
-
-    if (error) {
-      setStatus('error');
-      setErrorMsg(error.message);
-    }
+    if (error) { setStatus('error'); setErrorMsg(error.message); }
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 pt-24 pb-12">
-      <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-2">Lift Log</div>
-      <h1 className="font-display text-6xl leading-none mb-3">
-        Welcome <span className="italic text-rose-300">back</span>
-      </h1>
-      <p className="text-zinc-500 text-sm mb-12">
-        Sign in to your account.
-      </p>
+    <div className="min-h-screen flex flex-col px-6 pt-24 pb-12" style={{ borderTop: '3px solid #fff' }}>
+      <div className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8">Lift Log</div>
+      <h1 className="text-5xl font-bold leading-none mb-1">Sign in</h1>
+      <p className="text-zinc-500 text-sm mb-10">Enter your credentials to continue.</p>
 
-      <form onSubmit={signIn} className="space-y-3">
+      <form onSubmit={signIn} className="space-y-2">
         <input
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="you@example.com"
+          placeholder="Email"
           autoComplete="email"
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-base focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
+          className="w-full text-sm px-4 py-3.5 focus:outline-none placeholder:text-zinc-600"
+          style={{ background: '#161616', border: '1px solid #222', borderRadius: 8 }}
         />
         <input
           type="password"
@@ -48,16 +40,20 @@ export function SignIn() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           autoComplete="current-password"
-          className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-base focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
+          className="w-full text-sm px-4 py-3.5 focus:outline-none placeholder:text-zinc-600"
+          style={{ background: '#161616', border: '1px solid #222', borderRadius: 8 }}
         />
-        <button
-          type="submit"
-          disabled={status === 'loading' || !email || !password}
-          className="w-full py-4 rounded-xl bg-zinc-100 text-zinc-950 font-bold disabled:bg-zinc-800 disabled:text-zinc-600 active:scale-[0.98] transition-transform"
-        >
-          {status === 'loading' ? 'Signing in…' : 'Sign in'}
-        </button>
-        {errorMsg && <div className="text-rose-400 text-sm mt-2">{errorMsg}</div>}
+        <div className="pt-2">
+          <button
+            type="submit"
+            disabled={status === 'loading' || !email || !password}
+            className="w-full py-3.5 text-sm font-bold tracking-wide disabled:opacity-40 active:opacity-80 transition-opacity"
+            style={{ background: '#efefef', color: '#0f0f0f', borderRadius: 8 }}
+          >
+            {status === 'loading' ? 'Signing in…' : 'Sign in'}
+          </button>
+        </div>
+        {errorMsg && <div className="text-red-400 text-xs mt-2 pt-1">{errorMsg}</div>}
       </form>
     </div>
   );
