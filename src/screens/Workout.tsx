@@ -72,28 +72,35 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
     return init;
   });
   const [expanded, setExpanded] = useState<string | null>(workout.exercises[0].id);
-  const [timer, setTimer] = useState({ active: false, secondsLeft: 0, total: 0 });
+  // Timer stores the end timestamp so it survives app backgrounding
+  const [timer, setTimer] = useState<{ endsAt: number; total: number } | null>(null);
+  const [, forceUpdate] = useState(0);
   const [startedAt] = useState(new Date().toISOString());
   const [startedAtMs] = useState(Date.now());
   const [showConfirm, setShowConfirm] = useState(false);
   const [saving, setSaving] = useState(false);
-  const tickRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tickRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (timer.active && timer.secondsLeft > 0) {
-      tickRef.current = setTimeout(() => {
-        setTimer((t) => ({ ...t, secondsLeft: t.secondsLeft - 1 }));
-      }, 1000);
-    } else if (timer.active && timer.secondsLeft === 0) {
-      setTimer((t) => ({ ...t, active: false }));
-      if (typeof navigator !== 'undefined' && navigator.vibrate) {
-        navigator.vibrate([200, 100, 200]);
+    if (!timer) return;
+    tickRef.current = setInterval(() => {
+      if (Date.now() >= timer.endsAt) {
+        setTimer(null);
+        if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          navigator.vibrate([200, 100, 200]);
+        }
+      } else {
+        forceUpdate((n) => n + 1);
       }
-    }
+    }, 500);
+    // Recalculate immediately when returning from background
+    const onVisible = () => forceUpdate((n) => n + 1);
+    document.addEventListener('visibilitychange', onVisible);
     return () => {
-      if (tickRef.current) clearTimeout(tickRef.current);
+      if (tickRef.current) clearInterval(tickRef.current);
+      document.removeEventListener('visibilitychange', onVisible);
     };
-  }, [timer.active, timer.secondsLeft]);
+  }, [timer]);
 
   const updateSet = (exId: string, idx: number, patch: Partial<SetState>) => {
     setSetData((prev) => ({
@@ -107,7 +114,7 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
     const nowDone = !set.done;
     updateSet(exId, idx, { done: nowDone });
     if (nowDone) {
-      setTimer({ active: true, secondsLeft: restSeconds, total: restSeconds });
+      setTimer({ endsAt: Date.now() + restSeconds * 1000, total: restSeconds });
       const allDone = setData[exId].every((s, i) => (i === idx ? true : s.done));
       if (allDone) {
         const order = workout.exercises.map((e) => e.id);
@@ -340,47 +347,50 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
       </main>
 
       {/* Rest timer */}
-      {timer.active && (
-        <div
-          className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-900 border-t shadow-2xl"
-          style={{ borderColor: workout.color.from + '50' }}
-        >
-          <div className="px-5 py-3 flex items-center gap-4">
-            <div className="flex-1">
-              <div
-                className="text-[10px] uppercase tracking-widest font-semibold"
-                style={{ color: workout.color.text }}
+      {timer && (() => {
+        const secondsLeft = Math.max(0, Math.round((timer.endsAt - Date.now()) / 1000));
+        return (
+          <div
+            className="fixed bottom-0 left-0 right-0 z-40 bg-zinc-900 border-t shadow-2xl"
+            style={{ borderColor: workout.color.from + '50' }}
+          >
+            <div className="px-5 py-3 flex items-center gap-4">
+              <div className="flex-1">
+                <div
+                  className="text-[10px] uppercase tracking-widest font-semibold"
+                  style={{ color: workout.color.text }}
+                >
+                  Rest
+                </div>
+                <div className="text-3xl font-mono font-bold tabular-nums leading-none mt-1">
+                  {fmtTime(secondsLeft)}
+                </div>
+              </div>
+              <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full transition-all duration-500 ease-linear"
+                  style={{
+                    width: `${(secondsLeft / timer.total) * 100}%`,
+                    background: workout.color.from,
+                  }}
+                />
+              </div>
+              <button
+                onClick={() => setTimer((t) => t ? { ...t, endsAt: t.endsAt + 15000 } : null)}
+                className="px-3 h-10 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-semibold active:scale-95"
               >
-                Rest
-              </div>
-              <div className="text-3xl font-mono font-bold tabular-nums leading-none mt-1">
-                {fmtTime(timer.secondsLeft)}
-              </div>
+                +15
+              </button>
+              <button
+                onClick={() => setTimer(null)}
+                className="px-3 h-10 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-semibold active:scale-95"
+              >
+                Skip
+              </button>
             </div>
-            <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
-              <div
-                className="h-full transition-all duration-1000 ease-linear"
-                style={{
-                  width: `${(timer.secondsLeft / timer.total) * 100}%`,
-                  background: workout.color.from,
-                }}
-              />
-            </div>
-            <button
-              onClick={() => setTimer((t) => ({ ...t, secondsLeft: t.secondsLeft + 15 }))}
-              className="px-3 h-10 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-semibold active:scale-95"
-            >
-              +15
-            </button>
-            <button
-              onClick={() => setTimer({ active: false, secondsLeft: 0, total: 0 })}
-              className="px-3 h-10 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-semibold active:scale-95"
-            >
-              Skip
-            </button>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Confirm finish modal */}
       {showConfirm && (
