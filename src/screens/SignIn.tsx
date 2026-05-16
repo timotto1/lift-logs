@@ -3,12 +3,10 @@ import { supabase } from '../lib/supabase';
 
 export function SignIn() {
   const [email, setEmail] = useState('');
-  const [token, setToken] = useState('');
-  const [step, setStep] = useState<'email' | 'otp'>('email');
-  const [status, setStatus] = useState<'idle' | 'sending' | 'verifying' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const sendOtp = async (e: React.FormEvent) => {
+  const sendLink = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || status === 'sending') return;
     setStatus('sending');
@@ -16,33 +14,14 @@ export function SignIn() {
 
     const { error } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: true },
+      options: { emailRedirectTo: window.location.origin },
     });
 
     if (error) {
       setStatus('error');
       setErrorMsg(error.message);
     } else {
-      setStatus('idle');
-      setStep('otp');
-    }
-  };
-
-  const verifyOtp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!token || status === 'verifying') return;
-    setStatus('verifying');
-    setErrorMsg(null);
-
-    const { error } = await supabase.auth.verifyOtp({
-      email,
-      token,
-      type: 'email',
-    });
-
-    if (error) {
-      setStatus('error');
-      setErrorMsg(error.message);
+      setStatus('sent');
     }
   };
 
@@ -53,11 +32,11 @@ export function SignIn() {
         Welcome <span className="italic text-rose-300">back</span>
       </h1>
       <p className="text-zinc-500 text-sm mb-12">
-        {step === 'email' ? 'Enter your email to get a sign-in code.' : `Enter the 6-digit code sent to ${email}.`}
+        Sign in with a magic link. No passwords, no faff.
       </p>
 
-      {step === 'email' ? (
-        <form onSubmit={sendOtp} className="space-y-3">
+      {status !== 'sent' ? (
+        <form onSubmit={sendLink} className="space-y-3">
           <input
             type="email"
             required
@@ -72,40 +51,19 @@ export function SignIn() {
             disabled={status === 'sending' || !email}
             className="w-full py-4 rounded-xl bg-zinc-100 text-zinc-950 font-bold disabled:bg-zinc-800 disabled:text-zinc-600 active:scale-[0.98] transition-transform"
           >
-            {status === 'sending' ? 'Sending…' : 'Send code'}
+            {status === 'sending' ? 'Sending…' : 'Send magic link'}
           </button>
           {errorMsg && <div className="text-rose-400 text-sm mt-2">{errorMsg}</div>}
         </form>
       ) : (
-        <form onSubmit={verifyOtp} className="space-y-3">
-          <input
-            type="text"
-            inputMode="numeric"
-            pattern="[0-9]*"
-            maxLength={6}
-            required
-            value={token}
-            onChange={(e) => setToken(e.target.value.replace(/\D/g, ''))}
-            placeholder="123456"
-            autoComplete="one-time-code"
-            className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-4 text-base tracking-widest focus:outline-none focus:border-zinc-600 placeholder:text-zinc-700"
-          />
-          <button
-            type="submit"
-            disabled={status === 'verifying' || token.length < 6}
-            className="w-full py-4 rounded-xl bg-zinc-100 text-zinc-950 font-bold disabled:bg-zinc-800 disabled:text-zinc-600 active:scale-[0.98] transition-transform"
-          >
-            {status === 'verifying' ? 'Verifying…' : 'Sign in'}
-          </button>
-          {errorMsg && <div className="text-rose-400 text-sm mt-2">{errorMsg}</div>}
-          <button
-            type="button"
-            onClick={() => { setStep('email'); setToken(''); setStatus('idle'); setErrorMsg(null); }}
-            className="w-full text-sm text-zinc-500 py-2"
-          >
-            Use a different email
-          </button>
-        </form>
+        <div className="rounded-2xl bg-zinc-900 border border-zinc-800 p-6">
+          <div className="text-2xl mb-2">✉️</div>
+          <div className="font-medium text-zinc-100 mb-1">Check your email</div>
+          <div className="text-sm text-zinc-500">
+            We sent a sign-in link to <span className="text-zinc-300">{email}</span>. Tap the link
+            from your phone and you'll be in.
+          </div>
+        </div>
       )}
     </div>
   );
