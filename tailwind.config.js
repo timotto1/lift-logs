@@ -5,7 +5,7 @@ export default {
     extend: {
       fontFamily: {
         sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', '"Helvetica Neue"', 'sans-serif'],
-        display: ['ui-serif', '"New York"', 'Georgia', 'serif'],
+        display: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"Helvetica Neue"', 'sans-serif'],
         mono: ['ui-monospace', '"SF Mono"', 'monospace'],
       },
     },
