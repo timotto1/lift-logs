@@ -99,7 +99,7 @@ export default function App() {
           onClose={() => { setActiveMobility(null); setScreen('home'); }}
         />
       )}
-      {screen === 'progress' && <Progress history={history} onRefetch={refetch} />}
+      {screen === 'progress' && <Progress history={history} onRefetch={refetch} userId={user.id} />}
 
       {screen !== 'workout' && screen !== 'mobility' && (
         <BottomNav
