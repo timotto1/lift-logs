@@ -112,7 +112,7 @@ export function NicotineCard({ userId }: Props) {
   const { settings, loading, saveSettings, setWeeklyCost, clearSettings } = useNicotine(userId);
   const [confirmReset, setConfirmReset] = useState(false);
 
-  if (loading) return null;
+  if (loading) return null; // only true on very first ever load with no cache
 
   if (!settings) {
     return (
