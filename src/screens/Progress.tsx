@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import type { SessionWithSets, SetLog } from '../lib/supabase';
+import { NicotineMilestones } from '../components/NicotineMilestones';
 import { WORKOUTS, getAllExercises, getWorkoutById, type Exercise, type Workout } from '../lib/workouts';
 import { relTime } from '../lib/format';
 import { updateSetLog, deleteSession, saveSession } from '../hooks/useHistory';
@@ -642,6 +643,9 @@ export function Progress({ history, onRefetch, userId }: Props) {
         <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-1">Progress</div>
         <h1 className="text-4xl font-bold leading-tight">Are you winning?</h1>
       </div>
+
+      {/* Nicotine-free milestones */}
+      <NicotineMilestones userId={userId} />
 
       {/* Segmented control */}
       <div className="px-4 mb-4">

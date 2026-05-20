@@ -74,6 +74,7 @@ export default function App() {
     <>
       {screen === 'home' && (
         <Home
+          userId={user.id}
           history={history}
           onStart={startWorkout}
           onStartMobility={(routine) => { setActiveMobility(routine); setScreen('mobility'); }}
