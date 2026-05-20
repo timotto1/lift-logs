@@ -644,9 +644,6 @@ export function Progress({ history, onRefetch, userId }: Props) {
         <h1 className="text-4xl font-bold leading-tight">Are you winning?</h1>
       </div>
 
-      {/* Nicotine-free milestones */}
-      <NicotineMilestones userId={userId} />
-
       {/* Segmented control */}
       <div className="px-4 mb-4">
         <div className="flex bg-zinc-900 rounded-xl p-1 border border-zinc-800">
@@ -704,6 +701,9 @@ export function Progress({ history, onRefetch, userId }: Props) {
           })}
         </div>
       )}
+
+      {/* Nicotine-free milestones */}
+      <NicotineMilestones userId={userId} />
     </div>
   );
 }
