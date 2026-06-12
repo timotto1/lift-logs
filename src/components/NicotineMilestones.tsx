@@ -54,7 +54,7 @@ function MilestoneProgress({ days }: { days: number }) {
         {next.benefit}
       </div>
       {/* Track */}
-      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: '#1e1e1e' }}>
+      <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
         <div
           className="h-full rounded-full transition-all"
           style={{ width: `${pct}%`, background: colors.positive }}
@@ -122,7 +122,7 @@ export function NicotineMilestones({ userId }: Props) {
               <div
                 className="w-6 h-6 rounded-full flex items-center justify-center shrink-0"
                 style={{
-                  background: reached ? colors.positiveSubtle : '#1a1a1a',
+                  background: reached ? colors.positiveSubtle : colors.surface2,
                   color: reached ? colors.positive : colors.textDim,
                   border: `1px solid ${reached ? colors.positive : colors.border}`,
                 }}
