@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Input, Button } from '../components/ui';
+import { Input, Button, colors } from '../components/ui';
 
 export function SignIn() {
   const [email, setEmail] = useState('');
@@ -18,12 +18,16 @@ export function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col px-6 pt-24 pb-12">
-      <div className="text-[10px] uppercase tracking-[0.4em] text-zinc-500 mb-8">Lift Log</div>
-      <h1 className="text-5xl font-bold leading-none mb-1">Sign in</h1>
-      <p className="text-zinc-500 text-sm mb-10">Enter your credentials to continue.</p>
+    <div className="min-h-screen flex flex-col px-6 pt-24 pb-12 animate-fade-rise">
+      <div className="text-[10px] uppercase tracking-[0.4em] mb-8" style={{ color: colors.textTertiary }}>
+        Lift Log
+      </div>
+      <h1 className="text-5xl font-bold leading-none mb-2 font-display tracking-tight">Sign in</h1>
+      <p className="text-sm mb-10" style={{ color: colors.textTertiary }}>
+        Enter your credentials to continue.
+      </p>
 
-      <form onSubmit={signIn} className="space-y-2">
+      <form onSubmit={signIn} className="space-y-2.5">
         <Input
           type="email"
           value={email}
@@ -40,15 +44,27 @@ export function SignIn() {
           autoComplete="current-password"
           required
         />
-        <div className="pt-2">
+        <div className="pt-3">
           <Button
             type="submit"
+            size="lg"
             disabled={status === 'loading' || !email || !password}
           >
             {status === 'loading' ? 'Signing in…' : 'Sign in'}
           </Button>
         </div>
-        {errorMsg && <div className="text-red-400 text-xs mt-2 pt-1">{errorMsg}</div>}
+        {errorMsg && (
+          <div
+            className="text-xs mt-2 px-3.5 py-2.5 animate-fade-rise"
+            style={{
+              color: colors.negative,
+              background: colors.negativeSubtle,
+              borderRadius: 12,
+            }}
+          >
+            {errorMsg}
+          </div>
+        )}
       </form>
     </div>
   );
