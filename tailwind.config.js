@@ -58,6 +58,9 @@ export default {
         'sheet-up': 'sheet-up 0.4s cubic-bezier(0.32, 0.72, 0, 1) both',
         'backdrop-in': 'backdrop-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both',
         'fade-rise': 'fade-rise 0.25s cubic-bezier(0.16, 1, 0.3, 1) both',
+        // Opacity-only screen mount — never adds a transform, so fixed
+        // descendants (sheets, nav, modals) keep viewport positioning.
+        'fade-in': 'backdrop-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) both',
       },
     },
   },

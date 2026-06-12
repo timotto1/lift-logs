@@ -12,7 +12,7 @@ interface Props {
 export function Badge({ value, unit = '', percentValue, className = '' }: Props) {
   const positive = value >= 0;
   const bg = positive ? colors.positiveSubtle : colors.negativeSubtle;
-  const color = positive ? '#4ade80' : '#f87171';
+  const color = positive ? colors.positive : colors.negative;
   const prefix = value > 0 ? '+' : '';
 
   return (

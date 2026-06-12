@@ -1,4 +1,4 @@
-import { colors } from './tokens';
+import { colors, radii } from './tokens';
 import { Input } from './Input';
 
 function CheckIcon({ size = 16 }: { size?: number }) {
@@ -39,7 +39,7 @@ export function SetRow({
   const isWorkoutMode = onToggleDone !== undefined;
 
   return (
-    <div className={`flex items-center gap-2 transition-opacity ${done ? 'opacity-50' : ''}`}>
+    <div className={`flex items-center gap-2 transition-opacity duration-200 ${done ? 'opacity-50' : ''}`}>
       {/* Set number */}
       <div className="text-xs font-mono w-4 text-center shrink-0" style={{ color: colors.textTertiary }}>
         {setNumber}
@@ -73,11 +73,11 @@ export function SetRow({
       {isWorkoutMode && (
         <button
           onClick={onToggleDone}
-          className="h-10 w-10 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
+          className="h-10 w-10 flex items-center justify-center shrink-0 active:scale-90 transition-[transform,background-color,color] duration-200"
           style={{
-            background: done ? colors.positive : '#1e1e1e',
-            color: done ? '#0a1f0c' : '#555',
-            borderRadius: 8,
+            background: done ? colors.positive : colors.surface2,
+            color: done ? '#06281c' : colors.textDim,
+            borderRadius: radii.md,
           }}
         >
           <CheckIcon size={16} />
@@ -90,7 +90,7 @@ export function SetRow({
           onClick={onSave}
           disabled={saving}
           className="text-[11px] font-semibold px-2.5 py-1 shrink-0 active:scale-95 transition-transform"
-          style={{ background: 'rgba(34,197,94,0.15)', color: '#4ade80', borderRadius: 6 }}
+          style={{ background: colors.positiveSubtle, color: colors.positive, borderRadius: radii.sm }}
         >
           {saving ? '…' : 'Save'}
         </button>

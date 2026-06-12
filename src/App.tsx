@@ -12,6 +12,22 @@ import type { MobilityRoutine } from './lib/mobility';
 
 type Screen = 'home' | 'workout' | 'mobility' | 'progress';
 
+function LoadingSkeleton() {
+  return (
+    <div className="min-h-screen px-5 pt-12 animate-fade-in">
+      <div className="skeleton h-3 w-14 mb-4" />
+      <div className="skeleton h-9 w-52 mb-3" />
+      <div className="skeleton h-3 w-36 mb-8" />
+      <div className="skeleton h-36 w-full mb-4" style={{ borderRadius: 16 }} />
+      <div className="grid grid-cols-2 gap-3 mb-6">
+        <div className="skeleton h-24" style={{ borderRadius: 16 }} />
+        <div className="skeleton h-24" style={{ borderRadius: 16 }} />
+      </div>
+      <div className="skeleton h-56 w-full" style={{ borderRadius: 16 }} />
+    </div>
+  );
+}
+
 export default function App() {
   const { user, loading: authLoading, signOut } = useAuth();
   const { history, loading: historyLoading, refetch } = useHistory(user?.id ?? null);
@@ -21,11 +37,7 @@ export default function App() {
   const [activeMobility, setActiveMobility] = useState<MobilityRoutine | null>(null);
 
   if (authLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-zinc-600 text-xs uppercase tracking-[0.3em]">Loading…</div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   if (!user) {
@@ -33,11 +45,7 @@ export default function App() {
   }
 
   if (historyLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-zinc-600 text-xs uppercase tracking-[0.3em]">Syncing…</div>
-      </div>
-    );
+    return <LoadingSkeleton />;
   }
 
   const startWorkout = (workout: Workout) => {
@@ -72,35 +80,38 @@ export default function App() {
 
   return (
     <>
-      {screen === 'home' && (
-        <Home
-          userId={user.id}
-          history={history}
-          onStart={startWorkout}
-          onStartMobility={(routine) => { setActiveMobility(routine); setScreen('mobility'); }}
-          onSignOut={signOut}
-        />
-      )}
-      {screen === 'workout' && activeWorkout && (
-        <WorkoutScreen
-          workout={activeWorkout}
-          history={history}
-          onFinish={finishWorkout}
-          onBack={() => {
-            if (confirm('Leave this session? Anything you logged but didn\'t save will be lost.')) {
-              setActiveWorkout(null);
-              setScreen('home');
-            }
-          }}
-        />
-      )}
-      {screen === 'mobility' && activeMobility && (
-        <MobilityTimer
-          routine={activeMobility}
-          onClose={() => { setActiveMobility(null); setScreen('home'); }}
-        />
-      )}
-      {screen === 'progress' && <Progress history={history} onRefetch={refetch} userId={user.id} />}
+      {/* key remounts the wrapper per screen so the fade-in plays on switch */}
+      <div key={screen} className="animate-fade-in">
+        {screen === 'home' && (
+          <Home
+            userId={user.id}
+            history={history}
+            onStart={startWorkout}
+            onStartMobility={(routine) => { setActiveMobility(routine); setScreen('mobility'); }}
+            onSignOut={signOut}
+          />
+        )}
+        {screen === 'workout' && activeWorkout && (
+          <WorkoutScreen
+            workout={activeWorkout}
+            history={history}
+            onFinish={finishWorkout}
+            onBack={() => {
+              if (confirm('Leave this session? Anything you logged but didn\'t save will be lost.')) {
+                setActiveWorkout(null);
+                setScreen('home');
+              }
+            }}
+          />
+        )}
+        {screen === 'mobility' && activeMobility && (
+          <MobilityTimer
+            routine={activeMobility}
+            onClose={() => { setActiveMobility(null); setScreen('home'); }}
+          />
+        )}
+        {screen === 'progress' && <Progress history={history} onRefetch={refetch} userId={user.id} />}
+      </div>
 
       {screen !== 'workout' && screen !== 'mobility' && (
         <BottomNav

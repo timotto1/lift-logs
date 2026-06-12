@@ -1,10 +1,12 @@
-import { radii } from './tokens';
+import { colors, motion, radii } from './tokens';
 
 type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
+type Size = 'md' | 'lg';
 
 interface Props {
   children: React.ReactNode;
   variant?: Variant;
+  size?: Size;
   accentColor?: string;       // overrides background for primary
   accentTextColor?: string;   // overrides text color for primary
   disabled?: boolean;
@@ -18,6 +20,7 @@ interface Props {
 export function Button({
   children,
   variant = 'primary',
+  size = 'md',
   accentColor,
   accentTextColor,
   disabled,
@@ -27,16 +30,19 @@ export function Button({
   type = 'button',
   fullWidth = true,
 }: Props) {
-  const base: React.CSSProperties = { borderRadius: radii.md };
+  const base: React.CSSProperties = {
+    borderRadius: radii.button,
+    transitionTimingFunction: motion.spring,
+  };
 
   const variantStyle: React.CSSProperties =
     variant === 'primary'
-      ? { background: accentColor ?? '#efefef', color: accentTextColor ?? '#0f0f0f' }
+      ? { background: accentColor ?? colors.textPrimary, color: accentTextColor ?? colors.bg }
       : variant === 'secondary'
-      ? { background: '#1a1a1a', border: '1px solid #2a2a2a', color: '#a1a1aa' }
+      ? { background: colors.surface2, border: `1px solid ${colors.borderInput}`, color: colors.textSecondary }
       : variant === 'ghost'
-      ? { background: 'transparent', color: '#71717a' }
-      : { background: 'rgba(239,68,68,0.15)', color: '#f87171' };
+      ? { background: 'transparent', color: colors.textTertiary }
+      : { background: colors.negativeSubtle, color: colors.negative };
 
   return (
     <button
@@ -44,9 +50,9 @@ export function Button({
       onClick={onClick}
       disabled={disabled}
       className={`
-        py-3.5 px-4 text-sm font-bold
-        active:opacity-75 transition-opacity
-        disabled:opacity-40
+        ${size === 'lg' ? 'py-4 px-5 text-base' : 'py-3.5 px-4 text-sm'} font-bold
+        active:scale-[0.97] active:opacity-90 transition-[transform,opacity] duration-150
+        disabled:opacity-40 disabled:active:scale-100
         flex items-center justify-center gap-2
         ${fullWidth ? 'w-full' : ''}
         ${className}

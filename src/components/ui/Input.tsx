@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { colors, radii } from './tokens';
 
 interface Props {
@@ -25,12 +26,15 @@ export function Input({
   required,
   className = '',
 }: Props) {
+  const [focused, setFocused] = useState(false);
+
   const containerStyle: React.CSSProperties = {
-    background: colors.cardElevated,
-    border: `1px solid ${colors.borderInput}`,
+    background: colors.surface2,
+    border: `1px solid ${focused ? 'rgba(255,255,255,0.25)' : colors.borderInput}`,
     borderRadius: radii.md,
     display: 'flex',
     alignItems: 'center',
+    transition: 'border-color 200ms ease-out',
   };
 
   return (
@@ -40,6 +44,8 @@ export function Input({
         inputMode={inputMode}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         placeholder={placeholder}
         autoComplete={autoComplete}
         max={max}
