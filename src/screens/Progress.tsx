@@ -4,6 +4,7 @@ import { NicotineMilestones } from '../components/NicotineMilestones';
 import { WORKOUTS, getAllExercises, getWorkoutById, type Exercise, type Workout } from '../lib/workouts';
 import { relTime } from '../lib/format';
 import { updateSetLog, deleteSession, saveSession } from '../hooks/useHistory';
+import { SegmentedControl, Sheet, colors, radii, surfaceSheen } from '../components/ui';
 
 interface Props {
   history: SessionWithSets[];
@@ -13,6 +14,18 @@ interface Props {
 
 const DAYS = ['M', 'T', 'W', 'T', 'F', 'S', 'S'];
 const WEEKS = 16;
+
+const panelStyle: React.CSSProperties = {
+  background: `${surfaceSheen}, ${colors.surface1}`,
+  border: `1px solid ${colors.border}`,
+  borderRadius: radii.lg,
+};
+
+const fieldStyle: React.CSSProperties = {
+  background: colors.surface2,
+  border: `1px solid ${colors.borderInput}`,
+  borderRadius: radii.md,
+};
 
 function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
   const sessionMap = useMemo(() => {
@@ -68,24 +81,32 @@ function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
 
   return (
     <div className="px-4 mb-2">
-      <div className="rounded-2xl bg-zinc-900/50 border border-zinc-800 p-4">
+      <div className="p-4" style={panelStyle}>
         <div className="flex items-baseline justify-between mb-3">
-          <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">Consistency</div>
+          <div className="text-[10px] uppercase tracking-[0.25em] font-semibold" style={{ color: colors.textTertiary }}>
+            Consistency
+          </div>
           <div className="flex gap-4">
-            {streakDays > 0 && <div className="text-xs font-bold text-emerald-400">{streakDays} day streak</div>}
-            <div className="text-xs text-zinc-500">{history.length} total</div>
+            {streakDays > 0 && (
+              <div className="text-xs font-bold" style={{ color: colors.positive }}>{streakDays} day streak</div>
+            )}
+            <div className="text-xs" style={{ color: colors.textTertiary }}>{history.length} total</div>
           </div>
         </div>
         <div className="flex mb-1 pl-6">
           {Array.from({ length: WEEKS }, (_, w) => {
             const label = monthLabels.find((m) => m.col === w);
-            return <div key={w} className="flex-1 text-[9px] text-zinc-600 leading-none">{label ? label.label : ''}</div>;
+            return (
+              <div key={w} className="flex-1 text-[9px] leading-none" style={{ color: colors.textDim }}>
+                {label ? label.label : ''}
+              </div>
+            );
           })}
         </div>
         <div className="flex gap-0.5">
           <div className="flex flex-col gap-0.5 mr-1">
             {DAYS.map((d, i) => (
-              <div key={i} className="h-3.5 w-4 text-[9px] text-zinc-600 flex items-center justify-end pr-1">
+              <div key={i} className="h-3.5 w-4 text-[9px] flex items-center justify-end pr-1" style={{ color: colors.textDim }}>
                 {i % 2 === 0 ? d : ''}
               </div>
             ))}
@@ -97,17 +118,22 @@ function ConsistencyHeatmap({ history }: { history: SessionWithSets[] }) {
                 const isToday = cell.date.getDate() === today.getDate() && cell.date.getMonth() === today.getMonth() && cell.date.getFullYear() === today.getFullYear();
                 return (
                   <div key={d} className="rounded-[2px] aspect-square"
-                    style={{ background: cell.isFuture ? 'transparent' : color ? color : '#27272a', opacity: cell.isFuture ? 0 : 1, outline: isToday ? '1.5px solid #a1a1aa' : 'none', outlineOffset: '1px' }} />
+                    style={{
+                      background: cell.isFuture ? 'transparent' : color ? color : 'rgba(255,255,255,0.07)',
+                      opacity: cell.isFuture ? 0 : 1,
+                      outline: isToday ? `1.5px solid ${colors.textSecondary}` : 'none',
+                      outlineOffset: '1px',
+                    }} />
                 );
               })}
             </div>
           ))}
         </div>
         <div className="flex items-center gap-2 mt-3 justify-end">
-          <span className="text-[9px] text-zinc-600">Less</span>
-          <div className="w-3 h-3 rounded-[2px] bg-zinc-800" />
+          <span className="text-[9px]" style={{ color: colors.textDim }}>Less</span>
+          <div className="w-3 h-3 rounded-[2px]" style={{ background: 'rgba(255,255,255,0.07)' }} />
           {WORKOUTS.map((w) => <div key={w.id} className="w-3 h-3 rounded-[2px]" style={{ background: w.color.from }} />)}
-          <span className="text-[9px] text-zinc-600">More</span>
+          <span className="text-[9px]" style={{ color: colors.textDim }}>More</span>
         </div>
       </div>
     </div>
@@ -161,17 +187,17 @@ function FullChart({ data, color, exId }: { data: number[]; color: string; exId:
         </linearGradient>
       </defs>
       {[0, 0.5, 1].map((t) => (
-        <line key={t} x1={pad.left} y1={pad.top + iH * t} x2={pad.left + iW} y2={pad.top + iH * t} stroke="#27272a" strokeDasharray="2 4" />
+        <line key={t} x1={pad.left} y1={pad.top + iH * t} x2={pad.left + iW} y2={pad.top + iH * t} stroke="rgba(255,255,255,0.08)" strokeDasharray="2 4" />
       ))}
       {[0, 0.5, 1].map((t) => (
-        <text key={t} x={pad.left - 6} y={pad.top + iH * t + 4} fontSize="9" fill="#52525b" textAnchor="end">
+        <text key={t} x={pad.left - 6} y={pad.top + iH * t + 4} fontSize="9" fill={colors.textDim} textAnchor="end">
           {Math.round(min + (1 - t) * range)}
         </text>
       ))}
       <path d={areaD} fill={`url(#g-${exId})`} />
       <path d={pathD} fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       {points.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="3" fill="#09090b" stroke={color} strokeWidth="1.5" />
+        <circle key={i} cx={p.x} cy={p.y} r="3" fill={colors.bg} stroke={color} strokeWidth="1.5" />
       ))}
     </svg>
   );
@@ -193,14 +219,14 @@ function ExerciseRow({ data, expanded, onToggle }: { data: ExerciseRowData; expa
   const hasData = sessions.length > 0;
 
   return (
-    <div className="border-b border-zinc-800/60 last:border-0">
+    <div style={{ borderBottom: `1px solid ${colors.borderSubtle}` }} className="last:border-0">
       <button
         onClick={onToggle}
-        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-zinc-900/50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.03] transition-colors"
       >
         {/* Left: name + workout */}
         <div className="flex-1 min-w-0 text-left">
-          <div className="text-sm font-semibold text-zinc-100 leading-tight truncate">{exercise.name}</div>
+          <div className="text-sm font-semibold leading-tight truncate">{exercise.name}</div>
           <div className="text-[11px] mt-0.5" style={{ color: exercise.workout.color.text }}>
             W{exercise.workout.id} · {exercise.workout.short}
           </div>
@@ -209,8 +235,8 @@ function ExerciseRow({ data, expanded, onToggle }: { data: ExerciseRowData; expa
         {/* Middle: sparkline */}
         <div className="shrink-0">
           {hasData && weights.length > 1
-            ? <Sparkline data={weights} color={change !== null && change >= 0 ? '#22c55e' : '#ef4444'} />
-            : <div className="w-16 h-8 flex items-center justify-center text-[10px] text-zinc-700">no data</div>
+            ? <Sparkline data={weights} color={change !== null && change >= 0 ? colors.positive : colors.negative} />
+            : <div className="w-16 h-8 flex items-center justify-center text-[10px]" style={{ color: colors.textDim }}>no data</div>
           }
         </div>
 
@@ -218,46 +244,67 @@ function ExerciseRow({ data, expanded, onToggle }: { data: ExerciseRowData; expa
         <div className="text-right shrink-0 w-20">
           {hasData ? (
             <>
-              <div className="text-sm font-semibold tabular-nums text-zinc-100">{latest ?? '—'}<span className="text-[10px] text-zinc-500 ml-0.5">kg</span></div>
+              <div className="text-sm font-semibold tabular-nums">
+                {latest ?? '—'}
+                <span className="text-[10px] ml-0.5" style={{ color: colors.textTertiary }}>kg</span>
+              </div>
               {change !== null && (
-                <div className={`text-[11px] font-semibold tabular-nums px-1.5 py-0.5 rounded inline-block mt-0.5 ${change >= 0 ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                <div
+                  className="text-[11px] font-semibold tabular-nums px-1.5 py-0.5 inline-block mt-0.5"
+                  style={{
+                    background: change >= 0 ? colors.positiveSubtle : colors.negativeSubtle,
+                    color: change >= 0 ? colors.positive : colors.negative,
+                    borderRadius: radii.sm,
+                  }}
+                >
                   {change >= 0 ? '+' : ''}{change}kg {changePct !== null ? `(${changePct > 0 ? '+' : ''}${changePct}%)` : ''}
                 </div>
               )}
             </>
           ) : (
-            <div className="text-xs text-zinc-600">—</div>
+            <div className="text-xs" style={{ color: colors.textDim }}>—</div>
           )}
         </div>
       </button>
 
       {/* Expanded detail */}
       {expanded && (
-        <div className="px-4 pb-4 bg-zinc-900/30">
+        <div className="px-4 pb-4 animate-fade-rise" style={{ background: 'rgba(255,255,255,0.02)' }}>
           {!hasData ? (
-            <div className="py-4 text-center text-zinc-600 text-sm">No sessions logged yet.</div>
+            <div className="py-4 text-center text-sm" style={{ color: colors.textDim }}>No sessions logged yet.</div>
           ) : (
             <>
               <FullChart data={weights} color={color} exId={exercise.id} />
               <div className="grid grid-cols-3 gap-2 mt-3">
-                <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-3 text-center">
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Sessions</div>
-                  <div className="text-xl font-bold">{sessions.length}</div>
-                </div>
-                <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-3 text-center">
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Best</div>
-                  <div className="text-xl font-bold">{Math.max(...weights)}<span className="text-xs text-zinc-500">kg</span></div>
-                </div>
-                <div className="rounded-xl bg-zinc-900 border border-zinc-800 p-3 text-center">
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Last</div>
-                  <div className="text-xl font-bold">{sessions[sessions.length - 1].topReps}<span className="text-xs text-zinc-500">reps</span></div>
-                </div>
+                {[
+                  { label: 'Sessions', value: sessions.length, unit: '' },
+                  { label: 'Best', value: Math.max(...weights), unit: 'kg' },
+                  { label: 'Last', value: sessions[sessions.length - 1].topReps ?? '—', unit: 'reps' },
+                ].map((stat) => (
+                  <div
+                    key={stat.label}
+                    className="p-3 text-center"
+                    style={{ background: colors.surface2, border: `1px solid ${colors.border}`, borderRadius: radii.md }}
+                  >
+                    <div className="text-[10px] uppercase tracking-wider mb-1" style={{ color: colors.textTertiary }}>
+                      {stat.label}
+                    </div>
+                    <div className="text-xl font-bold font-display">
+                      {stat.value}
+                      {stat.unit && <span className="text-xs font-sans font-normal" style={{ color: colors.textTertiary }}>{stat.unit}</span>}
+                    </div>
+                  </div>
+                ))}
               </div>
               <div className="mt-3 space-y-1">
                 {[...sessions].reverse().slice(0, 5).map((s, i) => (
-                  <div key={i} className="flex items-center justify-between py-2 px-3 rounded-lg bg-zinc-900/60 border border-zinc-800/50">
+                  <div
+                    key={i}
+                    className="flex items-center justify-between py-2 px-3"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: `1px solid ${colors.borderSubtle}`, borderRadius: radii.md }}
+                  >
                     <div className="text-sm font-mono tabular-nums">{s.topWeight ?? 'BW'}kg × {s.topReps}</div>
-                    <div className="text-xs text-zinc-500">{relTime(s.date)}</div>
+                    <div className="text-xs" style={{ color: colors.textTertiary }}>{relTime(s.date)}</div>
                   </div>
                 ))}
               </div>
@@ -269,7 +316,7 @@ function ExerciseRow({ data, expanded, onToggle }: { data: ExerciseRowData; expa
   );
 }
 
-function EditableSet({ set, exName, onSaved }: { set: SetLog; exName: string; onSaved: () => void }) {
+function EditableSet({ set, onSaved }: { set: SetLog; onSaved: () => void }) {
   const [weight, setWeight] = useState(set.weight != null ? String(set.weight) : '');
   const [reps, setReps] = useState(set.reps != null ? String(set.reps) : '');
   const [saving, setSaving] = useState(false);
@@ -287,35 +334,51 @@ function EditableSet({ set, exName, onSaved }: { set: SetLog; exName: string; on
 
   return (
     <div className="flex items-center gap-2 py-1.5">
-      <div className="text-xs text-zinc-500 w-5 text-center tabular-nums">{set.set_number}</div>
+      <div className="text-xs w-5 text-center tabular-nums" style={{ color: colors.textTertiary }}>{set.set_number}</div>
       <input
         type="number"
         inputMode="decimal"
         value={weight}
         onChange={(e) => setWeight(e.target.value)}
         placeholder="—"
-        className="w-16 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-sm font-mono text-center focus:outline-none focus:border-zinc-500"
+        className="w-16 px-2 py-1.5 text-sm font-mono text-center focus:outline-none"
+        style={fieldStyle}
       />
-      <span className="text-xs text-zinc-600">kg ×</span>
+      <span className="text-xs" style={{ color: colors.textDim }}>kg ×</span>
       <input
         type="number"
         inputMode="numeric"
         value={reps}
         onChange={(e) => setReps(e.target.value)}
         placeholder="—"
-        className="w-14 bg-zinc-800 border border-zinc-700 rounded-lg px-2 py-1.5 text-sm font-mono text-center focus:outline-none focus:border-zinc-500"
+        className="w-14 px-2 py-1.5 text-sm font-mono text-center focus:outline-none"
+        style={fieldStyle}
       />
-      <span className="text-xs text-zinc-600">reps</span>
+      <span className="text-xs" style={{ color: colors.textDim }}>reps</span>
       {dirty && (
         <button
           onClick={save}
           disabled={saving}
-          className="ml-auto text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 active:scale-95 transition-transform"
+          className="ml-auto text-[11px] font-semibold px-2.5 py-1 active:scale-95 transition-transform"
+          style={{ background: colors.positiveSubtle, color: colors.positive, borderRadius: radii.sm }}
         >
           {saving ? '…' : 'Save'}
         </button>
       )}
     </div>
+  );
+}
+
+function ChevronIcon({ open }: { open: boolean }) {
+  return (
+    <svg
+      width={14} height={14} viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+      className="transition-transform duration-300"
+      style={{ transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }}
+    >
+      <polyline points="6 9 12 15 18 9" />
+    </svg>
   );
 }
 
@@ -343,67 +406,76 @@ function SessionCard({ session, onDeleted, onSaved }: { session: SessionWithSets
   };
 
   return (
-    <div className="rounded-2xl bg-zinc-900/50 border border-zinc-800 overflow-hidden">
+    <div className="overflow-hidden" style={panelStyle}>
       {/* Header row */}
       <button
         onClick={() => setExpanded((e) => !e)}
-        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-zinc-900 transition-colors text-left"
+        className="w-full flex items-center gap-3 px-4 py-3.5 active:bg-white/[0.03] transition-colors text-left"
       >
         <div
           className="w-1 h-10 rounded-full shrink-0"
-          style={{ background: workout?.color.from ?? '#27272a' }}
+          style={{ background: workout?.color.from ?? colors.surface3 }}
         />
         <div className="flex-1 min-w-0">
-          <div className="text-sm font-semibold text-zinc-100 truncate">{workout?.name ?? 'Workout'}</div>
-          <div className="text-[11px] text-zinc-500 mt-0.5">
+          <div className="text-sm font-semibold truncate">{workout?.name ?? 'Workout'}</div>
+          <div className="text-[11px] mt-0.5" style={{ color: colors.textTertiary }}>
             {session.sets.length} sets · {session.duration_minutes ?? '—'} min
           </div>
         </div>
         <div className="text-right shrink-0">
-          <div className="text-xs text-zinc-400">{new Date(session.finished_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}</div>
-          <div className="text-[11px] text-zinc-600 mt-0.5">{relTime(session.finished_at)}</div>
+          <div className="text-xs" style={{ color: colors.textSecondary }}>
+            {new Date(session.finished_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+          </div>
+          <div className="text-[11px] mt-0.5" style={{ color: colors.textDim }}>{relTime(session.finished_at)}</div>
         </div>
-        <div className="text-zinc-600 ml-1 text-xs">{expanded ? '▲' : '▼'}</div>
+        <div className="ml-1" style={{ color: colors.textDim }}>
+          <ChevronIcon open={expanded} />
+        </div>
       </button>
 
       {/* Expanded: editable sets */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-zinc-800">
+        <div className="px-4 pb-4 animate-fade-rise" style={{ borderTop: `1px solid ${colors.borderSubtle}` }}>
           {Array.from(byExercise.entries()).map(([exId, sets]) => {
             const allExercises = getAllExercises();
             const ex = allExercises.find((e) => e.id === exId);
             return (
               <div key={exId} className="mt-3">
-                <div className="text-[11px] font-semibold text-zinc-400 mb-1.5">{ex?.name ?? exId}</div>
+                <div className="text-[11px] font-semibold mb-1.5" style={{ color: colors.textSecondary }}>
+                  {ex?.name ?? exId}
+                </div>
                 {sets.map((s) => (
-                  <EditableSet key={s.id} set={s} exName={ex?.name ?? exId} onSaved={onSaved} />
+                  <EditableSet key={s.id} set={s} onSaved={onSaved} />
                 ))}
               </div>
             );
           })}
 
           {/* Delete */}
-          <div className="mt-4 pt-3 border-t border-zinc-800">
+          <div className="mt-4 pt-3" style={{ borderTop: `1px solid ${colors.borderSubtle}` }}>
             {!confirmDelete ? (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="text-xs text-zinc-600 active:text-rose-400 transition-colors"
+                className="text-xs transition-colors"
+                style={{ color: colors.textDim }}
               >
                 Delete session
               </button>
             ) : (
               <div className="flex items-center gap-3">
-                <span className="text-xs text-zinc-500">Are you sure?</span>
+                <span className="text-xs" style={{ color: colors.textTertiary }}>Are you sure?</span>
                 <button
                   onClick={handleDelete}
                   disabled={deleting}
-                  className="text-xs font-semibold text-rose-400 active:scale-95 transition-transform"
+                  className="text-xs font-semibold active:scale-95 transition-transform"
+                  style={{ color: colors.negative }}
                 >
                   {deleting ? 'Deleting…' : 'Yes, delete'}
                 </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
-                  className="text-xs text-zinc-500"
+                  className="text-xs"
+                  style={{ color: colors.textTertiary }}
                 >
                   Cancel
                 </button>
@@ -467,115 +539,114 @@ function AddSessionSheet({ userId, onSaved, onClose }: { userId: string; onSaved
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-      <div
-        className="relative bg-zinc-950 rounded-t-3xl border-t border-zinc-800 flex flex-col"
-        style={{ maxHeight: '90vh' }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Handle */}
-        <div className="flex justify-center pt-3 pb-1 shrink-0">
-          <div className="w-10 h-1 rounded-full bg-zinc-700" />
-        </div>
-
-        {/* Header */}
-        <div className="px-5 pt-2 pb-4 shrink-0" style={{ borderBottom: '1px solid #222' }}>
-          <div className="flex items-center justify-between mb-4">
-            <div className="text-lg font-bold">Log past session</div>
-            <button onClick={onClose} className="text-zinc-500 text-sm active:text-zinc-300">Cancel</button>
-          </div>
-
-          {/* Date picker — full width */}
-          <div className="mb-3">
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Date</div>
-            <input
-              type="date"
-              value={date}
-              max={today}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full text-sm px-4 py-3 focus:outline-none text-zinc-100"
-              style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}
-            />
-          </div>
-
-          {/* Workout picker — full width, 2×2 grid */}
-          <div>
-            <div className="text-[10px] uppercase tracking-widest text-zinc-500 mb-1.5">Workout</div>
-            <div className="grid grid-cols-2 gap-2">
-              {WORKOUTS.map((w) => (
-                <button
-                  key={w.id}
-                  onClick={() => switchWorkout(w.id)}
-                  className="py-3 text-sm font-bold text-left px-3 transition-all active:opacity-80"
-                  style={{
-                    background: workoutId === w.id ? w.color.from + '20' : '#1a1a1a',
-                    border: `1px solid ${workoutId === w.id ? w.color.from : '#2a2a2a'}`,
-                    borderRadius: 8,
-                    color: workoutId === w.id ? w.color.text : '#555',
-                  }}
-                >
-                  <div className="text-xs font-bold mb-0.5">W{w.id}</div>
-                  <div className="text-[11px] font-normal truncate">{w.name}</div>
-                </button>
-              ))}
+    <Sheet onClose={onClose}>
+      {(close) => (
+        <>
+          {/* Header */}
+          <div className="px-5 pt-2 pb-4 shrink-0" style={{ borderBottom: `1px solid ${colors.borderSubtle}` }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="text-lg font-bold font-display tracking-tight">Log past session</div>
+              <button onClick={close} className="text-sm active:opacity-60 transition-opacity" style={{ color: colors.textTertiary }}>
+                Cancel
+              </button>
             </div>
-          </div>
-        </div>
 
-        {/* Scrollable exercise list */}
-        <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
-          {workout.exercises.map((ex) => (
-            <div key={ex.id}>
-              <div className="text-xs font-semibold text-zinc-300 mb-2">{ex.name}</div>
-              {/* Grid: set# | kg label+input | × | reps label+input */}
-              <div className="space-y-2">
-                {(setData[ex.id] ?? []).map((s, i) => (
-                  <div key={i} className="flex items-center gap-2 w-full">
-                    <div className="text-xs text-zinc-600 w-4 text-center shrink-0">{i + 1}</div>
-                    <div className="flex items-center gap-1 flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
-                      <input
-                        type="number"
-                        inputMode="decimal"
-                        value={s.weight}
-                        onChange={(e) => updateCell(ex.id, i, 'weight', e.target.value)}
-                        placeholder="0"
-                        className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
-                      />
-                      <span className="text-xs text-zinc-600 shrink-0">kg</span>
-                    </div>
-                    <span className="text-xs text-zinc-600 shrink-0">×</span>
-                    <div className="flex items-center gap-1 flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
-                      <input
-                        type="number"
-                        inputMode="numeric"
-                        value={s.reps}
-                        onChange={(e) => updateCell(ex.id, i, 'reps', e.target.value)}
-                        placeholder="0"
-                        className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
-                      />
-                      <span className="text-xs text-zinc-600 shrink-0 pr-2">reps</span>
-                    </div>
-                  </div>
+            {/* Date picker — full width */}
+            <div className="mb-3">
+              <div className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: colors.textTertiary }}>Date</div>
+              <input
+                type="date"
+                value={date}
+                max={today}
+                onChange={(e) => setDate(e.target.value)}
+                className="w-full text-sm px-4 py-3 focus:outline-none"
+                style={{ ...fieldStyle, color: colors.textPrimary }}
+              />
+            </div>
+
+            {/* Workout picker — full width, 2×2 grid */}
+            <div>
+              <div className="text-[10px] uppercase tracking-widest mb-1.5" style={{ color: colors.textTertiary }}>Workout</div>
+              <div className="grid grid-cols-2 gap-2">
+                {WORKOUTS.map((w) => (
+                  <button
+                    key={w.id}
+                    onClick={() => switchWorkout(w.id)}
+                    className="py-3 text-sm font-bold text-left px-3 transition-all duration-200 active:scale-[0.97]"
+                    style={{
+                      background: workoutId === w.id ? w.color.from + '20' : colors.surface2,
+                      border: `1px solid ${workoutId === w.id ? w.color.from : colors.borderInput}`,
+                      borderRadius: radii.md,
+                      color: workoutId === w.id ? w.color.text : colors.textDim,
+                    }}
+                  >
+                    <div className="text-xs font-bold mb-0.5">W{w.id}</div>
+                    <div className="text-[11px] font-normal truncate">{w.name}</div>
+                  </button>
                 ))}
               </div>
             </div>
-          ))}
-        </div>
+          </div>
 
-        {/* Save button */}
-        <div className="px-5 pt-3 shrink-0" style={{ paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 16px), 32px)', borderTop: '1px solid #1e1e1e' }}>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="w-full py-3.5 text-sm font-bold disabled:opacity-50 active:opacity-80 transition-opacity"
-            style={{ background: workout.color.from, color: '#000', borderRadius: 8 }}
+          {/* Scrollable exercise list */}
+          <div className="overflow-y-auto flex-1 px-5 py-4 space-y-5">
+            {workout.exercises.map((ex) => (
+              <div key={ex.id}>
+                <div className="text-xs font-semibold mb-2" style={{ color: colors.textSecondary }}>{ex.name}</div>
+                <div className="space-y-2">
+                  {(setData[ex.id] ?? []).map((s, i) => (
+                    <div key={i} className="flex items-center gap-2 w-full">
+                      <div className="text-xs w-4 text-center shrink-0" style={{ color: colors.textDim }}>{i + 1}</div>
+                      <div className="flex items-center gap-1 flex-1 min-w-0" style={fieldStyle}>
+                        <input
+                          type="number"
+                          inputMode="decimal"
+                          value={s.weight}
+                          onChange={(e) => updateCell(ex.id, i, 'weight', e.target.value)}
+                          placeholder="0"
+                          className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
+                        />
+                        <span className="text-xs shrink-0 pr-2" style={{ color: colors.textDim }}>kg</span>
+                      </div>
+                      <span className="text-xs shrink-0" style={{ color: colors.textDim }}>×</span>
+                      <div className="flex items-center gap-1 flex-1 min-w-0" style={fieldStyle}>
+                        <input
+                          type="number"
+                          inputMode="numeric"
+                          value={s.reps}
+                          onChange={(e) => updateCell(ex.id, i, 'reps', e.target.value)}
+                          placeholder="0"
+                          className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
+                        />
+                        <span className="text-xs shrink-0 pr-2" style={{ color: colors.textDim }}>reps</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Save button */}
+          <div
+            className="px-5 pt-3 shrink-0"
+            style={{
+              paddingBottom: 'max(calc(env(safe-area-inset-bottom) + 16px), 32px)',
+              borderTop: `1px solid ${colors.borderSubtle}`,
+            }}
           >
-            {saving ? 'Saving…' : 'Save session'}
-          </button>
-        </div>
-      </div>
-    </div>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full py-3.5 text-sm font-bold disabled:opacity-50 active:scale-[0.97] active:opacity-90 transition-[transform,opacity] duration-150"
+              style={{ background: workout.color.from, color: '#000', borderRadius: radii.button }}
+            >
+              {saving ? 'Saving…' : 'Save session'}
+            </button>
+          </div>
+        </>
+      )}
+    </Sheet>
   );
 }
 
@@ -590,15 +661,15 @@ function HistoryView({ history, onRefetch, userId }: { history: SessionWithSets[
       <div className="px-4 mt-2">
         <button
           onClick={() => setShowAdd(true)}
-          className="w-full py-3.5 text-sm font-bold active:opacity-70 transition-opacity mb-4"
-          style={{ background: '#efefef', color: '#0f0f0f', borderRadius: 8 }}
+          className="w-full py-3.5 text-sm font-bold active:scale-[0.97] active:opacity-90 transition-[transform,opacity] duration-150 mb-4"
+          style={{ background: colors.textPrimary, color: colors.bg, borderRadius: radii.button }}
         >
           + Add past session
         </button>
         {history.length === 0 ? (
           <div className="py-12 text-center">
-            <div className="text-zinc-600 text-sm">No sessions logged yet.</div>
-            <div className="text-zinc-700 text-xs mt-1">Finish a workout to see it here.</div>
+            <div className="text-sm" style={{ color: colors.textDim }}>No sessions logged yet.</div>
+            <div className="text-xs mt-1" style={{ color: colors.textDim, opacity: 0.7 }}>Finish a workout to see it here.</div>
           </div>
         ) : (
           <div className="space-y-3">
@@ -640,27 +711,20 @@ export function Progress({ history, onRefetch, userId }: Props) {
   return (
     <div className="min-h-screen pb-28">
       <div className="px-4 pt-12 pb-4">
-        <div className="text-xs uppercase tracking-[0.3em] text-zinc-500 mb-1">Progress</div>
-        <h1 className="text-4xl font-bold leading-tight">Are you winning?</h1>
+        <div className="text-xs uppercase tracking-[0.3em] mb-1" style={{ color: colors.textTertiary }}>Progress</div>
+        <h1 className="text-4xl font-bold leading-tight font-display tracking-tight">Are you winning?</h1>
       </div>
 
       {/* Segmented control */}
       <div className="px-4 mb-4">
-        <div className="flex bg-zinc-900 rounded-xl p-1 border border-zinc-800">
-          {(['exercises', 'history'] as const).map((t) => (
-            <button
-              key={t}
-              onClick={() => setTab(t)}
-              className="flex-1 py-2 rounded-lg text-sm font-semibold transition-all"
-              style={{
-                background: tab === t ? '#ffffff' : 'transparent',
-                color: tab === t ? '#09090b' : '#71717a',
-              }}
-            >
-              {t === 'exercises' ? 'Exercises' : 'History'}
-            </button>
-          ))}
-        </div>
+        <SegmentedControl
+          tabs={[
+            { id: 'exercises', label: 'Exercises' },
+            { id: 'history', label: 'History' },
+          ]}
+          active={tab}
+          onChange={(id) => setTab(id as 'exercises' | 'history')}
+        />
       </div>
 
       {tab === 'exercises' && (
@@ -682,11 +746,11 @@ export function Progress({ history, onRefetch, userId }: Props) {
               <div key={workout.id} className="mb-4">
                 <div className="px-4 py-2 flex items-center gap-2">
                   <div className="w-2 h-2 rounded-full" style={{ background: workout.color.from }} />
-                  <div className="text-[10px] uppercase tracking-[0.25em] text-zinc-500 font-semibold">
+                  <div className="text-[10px] uppercase tracking-[0.25em] font-semibold" style={{ color: colors.textTertiary }}>
                     W{workout.id} — {workout.name}
                   </div>
                 </div>
-                <div className="mx-4 rounded-2xl bg-zinc-900/50 border border-zinc-800 overflow-hidden">
+                <div className="mx-4 overflow-hidden" style={panelStyle}>
                   {rows.map((row) => (
                     <ExerciseRow
                       key={row.exercise.id}

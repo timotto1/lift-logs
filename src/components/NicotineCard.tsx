@@ -142,7 +142,7 @@ export function NicotineCard({ userId }: Props) {
       <Card>
         {/* Day count */}
         <div className="flex items-end gap-3 mb-1">
-          <div className="text-5xl font-bold tabular-nums leading-none" style={{ color: colors.textPrimary }}>
+          <div className="text-5xl font-bold tabular-nums leading-none font-display tracking-tight" style={{ color: colors.textPrimary }}>
             {primary}
           </div>
           <div className="pb-1">

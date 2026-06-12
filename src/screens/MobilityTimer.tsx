@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { MobilityRoutine } from '../lib/mobility';
 import { fmtTime } from '../lib/format';
+import { colors, radii } from '../components/ui';
 
 interface Props {
   routine: MobilityRoutine;
@@ -78,14 +79,24 @@ export function MobilityTimer({ routine, onClose }: Props) {
   // Finished screen
   if (finished) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center px-8 text-center" style={{ background: '#0f0f0f' }}>
-        <div className="text-5xl mb-6">✓</div>
-        <div className="text-3xl font-bold mb-2">Done</div>
-        <div className="text-zinc-500 text-sm mb-10">{routine.name} · {routine.totalMinutes} min</div>
+      <div
+        className="fixed inset-0 z-50 flex flex-col items-center justify-center px-8 text-center animate-fade-rise"
+        style={{ background: colors.bg }}
+      >
+        <div
+          className="w-16 h-16 mb-7 flex items-center justify-center rounded-full"
+          style={{ background: colors.positiveSubtle, color: colors.positive }}
+        >
+          <CheckIcon size={28} />
+        </div>
+        <div className="text-3xl font-bold mb-2 font-display tracking-tight">Done</div>
+        <div className="text-sm mb-10" style={{ color: colors.textTertiary }}>
+          {routine.name} · {routine.totalMinutes} min
+        </div>
         <button
           onClick={onClose}
-          className="w-full max-w-xs py-3.5 text-sm font-bold"
-          style={{ background: '#efefef', color: '#0f0f0f', borderRadius: 8 }}
+          className="w-full max-w-xs py-3.5 text-sm font-bold active:scale-[0.97] transition-transform duration-150"
+          style={{ background: colors.textPrimary, color: colors.bg, borderRadius: radii.button }}
         >
           Back to Home
         </button>
@@ -98,14 +109,16 @@ export function MobilityTimer({ routine, onClose }: Props) {
   const circ = 2 * Math.PI * R;
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: '#0f0f0f' }}>
+    <div className="fixed inset-0 z-50 flex flex-col" style={{ background: colors.bg }}>
       {/* Header */}
       <header className="flex items-center gap-3 px-5 pt-12 pb-4">
-        <button onClick={onClose} className="active:opacity-60 transition-opacity">
+        <button onClick={onClose} className="active:opacity-60 active:scale-95 transition-[opacity,transform]">
           <ArrowLeftIcon size={20} />
         </button>
         <div className="flex-1">
-          <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">{routine.name}</div>
+          <div className="text-[10px] uppercase tracking-[0.3em]" style={{ color: colors.textTertiary }}>
+            {routine.name}
+          </div>
           <div className="text-sm font-semibold">{currentIdx + 1} / {routine.exercises.length}</div>
         </div>
       </header>
@@ -113,17 +126,27 @@ export function MobilityTimer({ routine, onClose }: Props) {
       {/* Progress segments */}
       <div className="px-5 py-3 flex gap-1">
         {routine.exercises.map((ex, i) => (
-          <div key={ex.id} className="h-0.5 flex-1 transition-all"
-            style={{ background: i < currentIdx ? routine.color.from : i === currentIdx ? '#efefef' : '#222' }} />
+          <div
+            key={ex.id}
+            className="h-0.5 flex-1 rounded-full transition-colors duration-300"
+            style={{
+              background:
+                i < currentIdx
+                  ? routine.color.from
+                  : i === currentIdx
+                  ? colors.textPrimary
+                  : 'rgba(255,255,255,0.08)',
+            }}
+          />
         ))}
       </div>
 
       {/* Main timer */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6">
+      <div className="flex-1 flex flex-col items-center justify-center px-6 animate-fade-rise">
         {/* Ring */}
         <div className="relative mb-8">
           <svg width={200} height={200} className="-rotate-90">
-            <circle cx={100} cy={100} r={R} fill="none" stroke="#27272a" strokeWidth={10} />
+            <circle cx={100} cy={100} r={R} fill="none" stroke="rgba(255,255,255,0.07)" strokeWidth={10} />
             <circle
               cx={100} cy={100} r={R}
               fill="none"
@@ -141,18 +164,22 @@ export function MobilityTimer({ routine, onClose }: Props) {
                 <div className="text-5xl font-mono font-bold tabular-nums leading-none">
                   {fmtTime(secondsLeft)}
                 </div>
-                <div className="text-xs text-zinc-500 mt-1 uppercase tracking-widest">remaining</div>
+                <div className="text-xs mt-1.5 uppercase tracking-widest" style={{ color: colors.textTertiary }}>
+                  remaining
+                </div>
               </>
             ) : (
-              <div className="text-zinc-400 text-sm">tap start</div>
+              <div className="text-sm" style={{ color: colors.textSecondary }}>tap start</div>
             )}
           </div>
         </div>
 
         {/* Exercise info */}
         <div className="text-center mb-8 px-4">
-          <div className="text-2xl font-bold mb-2">{exercise.name}</div>
-          <div className="text-sm text-zinc-400 leading-relaxed">{exercise.description}</div>
+          <div className="text-2xl font-bold mb-2 font-display tracking-tight">{exercise.name}</div>
+          <div className="text-sm leading-relaxed" style={{ color: colors.textSecondary }}>
+            {exercise.description}
+          </div>
         </div>
 
         {/* Controls */}
@@ -160,16 +187,16 @@ export function MobilityTimer({ routine, onClose }: Props) {
           {!started ? (
             <button
               onClick={() => startExercise(0)}
-              className="w-full py-3.5 text-sm font-bold active:opacity-80 transition-opacity"
-              style={{ background: routine.color.from, color: '#000', borderRadius: 8 }}
+              className="w-full py-3.5 text-sm font-bold active:scale-[0.97] active:opacity-90 transition-[transform,opacity] duration-150"
+              style={{ background: routine.color.from, color: '#000', borderRadius: radii.button }}
             >
               Start
             </button>
           ) : (
             <button
               onClick={goNext}
-              className="w-full py-3.5 text-sm font-bold flex items-center justify-center gap-2 active:opacity-80 transition-opacity"
-              style={{ background: routine.color.from, color: '#000', borderRadius: 8 }}
+              className="w-full py-3.5 text-sm font-bold flex items-center justify-center gap-2 active:scale-[0.97] active:opacity-90 transition-[transform,opacity] duration-150"
+              style={{ background: routine.color.from, color: '#000', borderRadius: radii.button }}
             >
               {isLast ? <><CheckIcon size={16} /> Finish</> : <>Skip →</>}
             </button>
@@ -177,8 +204,13 @@ export function MobilityTimer({ routine, onClose }: Props) {
           {started && (
             <button
               onClick={() => setEndsAt(endsAt ? endsAt + 30000 : null)}
-              className="w-full py-3 text-sm font-semibold text-zinc-400 active:text-zinc-200 transition-colors"
-              style={{ background: '#161616', border: '1px solid #222', borderRadius: 8 }}
+              className="w-full py-3 text-sm font-semibold active:scale-[0.97] transition-[transform,color] duration-150"
+              style={{
+                background: colors.surface2,
+                border: `1px solid ${colors.border}`,
+                color: colors.textSecondary,
+                borderRadius: radii.button,
+              }}
             >
               +30 seconds
             </button>
@@ -189,10 +221,19 @@ export function MobilityTimer({ routine, onClose }: Props) {
       {/* Up next */}
       {started && !isLast && (
         <div className="px-5 pb-10">
-          <div className="flex items-center gap-3 px-4 py-3.5" style={{ background: '#131313', border: '1px solid #1e1e1e', borderRadius: 8 }}>
-            <div className="text-[10px] uppercase tracking-widest text-zinc-600 shrink-0">Up next</div>
-            <div className="text-sm text-zinc-400 truncate">{routine.exercises[currentIdx + 1].name}</div>
-            <div className="ml-auto text-xs text-zinc-600 shrink-0 tabular-nums">{fmtTime(routine.exercises[currentIdx + 1].duration)}</div>
+          <div
+            className="flex items-center gap-3 px-4 py-3.5"
+            style={{ background: colors.surface1, border: `1px solid ${colors.borderSubtle}`, borderRadius: radii.md }}
+          >
+            <div className="text-[10px] uppercase tracking-widest shrink-0" style={{ color: colors.textDim }}>
+              Up next
+            </div>
+            <div className="text-sm truncate" style={{ color: colors.textSecondary }}>
+              {routine.exercises[currentIdx + 1].name}
+            </div>
+            <div className="ml-auto text-xs shrink-0 tabular-nums" style={{ color: colors.textDim }}>
+              {fmtTime(routine.exercises[currentIdx + 1].duration)}
+            </div>
           </div>
         </div>
       )}
