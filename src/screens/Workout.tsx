@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import type { Workout } from '../lib/workouts';
 import type { SessionWithSets } from '../lib/supabase';
 import { fmtTime, relTime } from '../lib/format';
+import { colors, motion, radii, surfaceSheen } from '../components/ui';
 
 interface SetState {
   weight: string;
@@ -162,28 +163,44 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
     // parent navigates away
   };
 
+  const fieldStyle: React.CSSProperties = {
+    background: colors.surface2,
+    border: `1px solid ${colors.borderInput}`,
+    borderRadius: radii.md,
+  };
+
   return (
     <div className="min-h-screen pb-32">
-      <header className="sticky top-0 z-30" style={{ background: '#0f0f0f' }}>
+      <header
+        className="sticky top-0 z-30 backdrop-blur-xl"
+        style={{ background: 'rgba(10,10,10,0.85)', borderBottom: `1px solid ${colors.borderSubtle}` }}
+      >
         <div className="px-5 pt-10 pb-4">
           <div className="flex items-center gap-3 mb-3">
-            <button onClick={onBack} className="active:opacity-60 transition-opacity -ml-0.5">
+            <button onClick={onBack} className="active:opacity-60 active:scale-95 transition-[opacity,transform] -ml-0.5">
               <ArrowLeftIcon size={20} />
             </button>
             <div className="flex-1">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-zinc-500 mb-0.5">Workout {workout.id}</div>
-              <div className="text-xl font-bold leading-none">{workout.name}</div>
+              <div className="text-[10px] uppercase tracking-[0.3em] mb-0.5" style={{ color: colors.textTertiary }}>
+                Workout {workout.id}
+              </div>
+              <div className="text-xl font-bold leading-none font-display tracking-tight">{workout.name}</div>
             </div>
             <div className="text-right">
-              <div className="text-[10px] uppercase tracking-widest text-zinc-600">Elapsed</div>
+              <div className="text-[10px] uppercase tracking-widest" style={{ color: colors.textDim }}>Elapsed</div>
               <div className="text-sm font-mono font-bold tabular-nums">{elapsedMin}m</div>
             </div>
           </div>
           <div className="flex items-center gap-3">
-            <div className="flex-1 h-px" style={{ background: '#1e1e1e' }}>
-              <div className="h-full transition-all duration-500" style={{ width: `${pct}%`, background: workout.color.from }} />
+            <div className="flex-1 h-1 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{ width: `${pct}%`, background: workout.color.from }}
+              />
             </div>
-            <div className="text-xs font-mono tabular-nums text-zinc-500 shrink-0">{doneSets}/{totalSets}</div>
+            <div className="text-xs font-mono tabular-nums shrink-0" style={{ color: colors.textTertiary }}>
+              {doneSets}/{totalSets}
+            </div>
           </div>
         </div>
       </header>
@@ -199,10 +216,15 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
           return (
             <div
               key={ex.id}
+              className="transition-[background,border-color] duration-300"
               style={{
-                background: isComplete ? '#0d1f0f' : isExpanded ? '#1a1a1a' : '#161616',
-                border: `1px solid ${isComplete ? '#1a3d1e' : '#222'}`,
-                borderRadius: 8,
+                background: isComplete
+                  ? colors.complete
+                  : isExpanded
+                  ? `${surfaceSheen}, ${colors.surface2}`
+                  : `${surfaceSheen}, ${colors.surface1}`,
+                border: `1px solid ${isComplete ? colors.completeBorder : colors.border}`,
+                borderRadius: radii.lg,
               }}
             >
               <button
@@ -210,40 +232,43 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
                 className="w-full flex items-center gap-3 p-4 text-left"
               >
                 <div
-                  className="w-8 h-8 flex items-center justify-center shrink-0 font-bold text-sm"
+                  className="w-8 h-8 flex items-center justify-center shrink-0 font-bold text-sm transition-colors duration-300"
                   style={{
-                    background: isComplete ? '#22c55e' : '#1e1e1e',
-                    color: isComplete ? '#0a1f0c' : '#555',
-                    borderRadius: 6,
+                    background: isComplete ? colors.positive : colors.surface3,
+                    color: isComplete ? '#06281c' : colors.textDim,
+                    borderRadius: 10,
                   }}
                 >
                   {isComplete ? <CheckIcon size={18} /> : exIdx + 1}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-medium leading-tight">{ex.name}</div>
-                  <div className="text-xs text-zinc-500 mt-0.5">
+                  <div className="text-xs mt-0.5" style={{ color: colors.textTertiary }}>
                     {ex.sets} × {ex.reps} · {ex.rest}s rest
                   </div>
                 </div>
-                <span className="text-xs font-mono tabular-nums text-zinc-500">
+                <span className="text-xs font-mono tabular-nums" style={{ color: colors.textTertiary }}>
                   {completed}/{ex.sets}
                 </span>
               </button>
 
               {isExpanded && (
-                <div className="px-4 pb-4">
+                <div className="px-4 pb-4 animate-fade-rise">
                   {lastData && (
-                    <div className="mb-3 px-3 py-2 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center gap-2">
+                    <div
+                      className="mb-3 px-3 py-2 flex items-center gap-2"
+                      style={{ background: '#101010', border: `1px solid ${colors.borderSubtle}`, borderRadius: radii.md }}
+                    >
                       <span style={{ color: workout.color.text, opacity: 0.8 }}>
                         <TrendingIcon size={14} />
                       </span>
-                      <div className="text-[11px] text-zinc-400">
-                        <span className="text-zinc-500">Last ({relTime(lastData.date)}): </span>
+                      <div className="text-[11px]" style={{ color: colors.textSecondary }}>
+                        <span style={{ color: colors.textTertiary }}>Last ({relTime(lastData.date)}): </span>
                         {lastData.sets.map((s, i) => (
                           <span key={i} className="font-mono">
                             {s.weight ?? 'BW'}×{s.reps}
                             {i < lastData.sets.length - 1 && (
-                              <span className="text-zinc-700 mx-1">·</span>
+                              <span className="mx-1" style={{ color: colors.textDim }}>·</span>
                             )}
                           </span>
                         ))}
@@ -257,13 +282,15 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
                       return (
                         <div
                           key={idx}
-                          className={`flex items-center gap-2 transition-opacity ${set.done ? 'opacity-50' : ''}`}
+                          className={`flex items-center gap-2 transition-opacity duration-200 ${set.done ? 'opacity-50' : ''}`}
                         >
                           {/* Set number */}
-                          <div className="text-xs font-mono text-zinc-600 w-4 text-center shrink-0">{idx + 1}</div>
+                          <div className="text-xs font-mono w-4 text-center shrink-0" style={{ color: colors.textDim }}>
+                            {idx + 1}
+                          </div>
 
                           {/* Weight input */}
-                          <div className="flex items-center flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
+                          <div className="flex items-center flex-1 min-w-0" style={fieldStyle}>
                             <input
                               type="number"
                               inputMode="decimal"
@@ -272,13 +299,13 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
                               placeholder={lastSet?.weight != null ? String(lastSet.weight) : '0'}
                               className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
                             />
-                            <span className="text-[11px] text-zinc-600 pr-2.5 shrink-0">kg</span>
+                            <span className="text-[11px] pr-2.5 shrink-0" style={{ color: colors.textDim }}>kg</span>
                           </div>
 
-                          <span className="text-xs text-zinc-600 shrink-0">×</span>
+                          <span className="text-xs shrink-0" style={{ color: colors.textDim }}>×</span>
 
                           {/* Reps input */}
-                          <div className="flex items-center flex-1 min-w-0" style={{ background: '#1a1a1a', border: '1px solid #2a2a2a', borderRadius: 8 }}>
+                          <div className="flex items-center flex-1 min-w-0" style={fieldStyle}>
                             <input
                               type="number"
                               inputMode="numeric"
@@ -287,14 +314,18 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
                               placeholder={String(ex.reps)}
                               className="flex-1 min-w-0 bg-transparent px-3 py-2.5 text-sm font-mono text-center focus:outline-none placeholder:text-zinc-700"
                             />
-                            <span className="text-[11px] text-zinc-600 pr-2.5 shrink-0">reps</span>
+                            <span className="text-[11px] pr-2.5 shrink-0" style={{ color: colors.textDim }}>reps</span>
                           </div>
 
                           {/* Done button */}
                           <button
                             onClick={() => completeSet(ex.id, idx, ex.rest)}
-                            className="h-10 w-10 flex items-center justify-center shrink-0 active:scale-95 transition-transform"
-                            style={{ background: set.done ? '#22c55e' : '#1e1e1e', color: set.done ? '#0a1f0c' : '#555', borderRadius: 8 }}
+                            className="h-10 w-10 flex items-center justify-center shrink-0 active:scale-90 transition-[transform,background-color,color] duration-200"
+                            style={{
+                              background: set.done ? colors.positive : colors.surface3,
+                              color: set.done ? '#06281c' : colors.textDim,
+                              borderRadius: radii.md,
+                            }}
                             aria-label={set.done ? 'Undo' : 'Complete'}
                           >
                             <CheckIcon size={16} />
@@ -312,11 +343,11 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
         <button
           onClick={() => setShowConfirm(true)}
           disabled={doneSets === 0}
-          className="w-full mt-4 py-3.5 text-sm font-bold active:opacity-80 transition-opacity disabled:opacity-30"
+          className="w-full mt-4 py-3.5 text-sm font-bold active:scale-[0.97] active:opacity-90 transition-[transform,opacity] duration-150 disabled:opacity-30 disabled:active:scale-100"
           style={{
-            background: doneSets === 0 ? '#1a1a1a' : workout.color.from,
-            color: doneSets === 0 ? '#555' : '#000',
-            borderRadius: 8,
+            background: doneSets === 0 ? colors.surface2 : workout.color.from,
+            color: doneSets === 0 ? colors.textDim : '#000',
+            borderRadius: radii.button,
           }}
         >
           Finish Session
@@ -328,10 +359,17 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
         const secondsLeft = Math.max(0, Math.round((timer.endsAt - Date.now()) / 1000));
         return (
           <div
-            className="fixed bottom-0 left-0 right-0 z-40"
-            style={{ background: '#161616', border: '1px solid #222', borderRadius: '12px 12px 0 0' }}
+            className="fixed bottom-0 left-0 right-0 z-40 backdrop-blur-xl animate-sheet-up"
+            style={{
+              background: 'rgba(20,20,20,0.92)',
+              borderTop: `1px solid ${colors.border}`,
+              borderRadius: `${radii.xl}px ${radii.xl}px 0 0`,
+            }}
           >
-            <div className="px-5 py-3 flex items-center gap-4">
+            <div
+              className="px-5 py-3 flex items-center gap-4"
+              style={{ paddingBottom: 'max(env(safe-area-inset-bottom), 12px)' }}
+            >
               <div className="flex-1">
                 <div
                   className="text-[10px] uppercase tracking-widest font-semibold"
@@ -343,9 +381,9 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
                   {fmtTime(secondsLeft)}
                 </div>
               </div>
-              <div className="flex-1 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+              <div className="flex-1 h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.08)' }}>
                 <div
-                  className="h-full transition-all duration-500 ease-linear"
+                  className="h-full rounded-full transition-all duration-500 ease-linear"
                   style={{
                     width: `${(secondsLeft / timer.total) * 100}%`,
                     background: workout.color.from,
@@ -354,13 +392,15 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
               </div>
               <button
                 onClick={() => setTimer((t) => t ? { ...t, endsAt: t.endsAt + 15000 } : null)}
-                className="px-3 h-10 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-semibold active:scale-95"
+                className="px-3 h-10 text-xs font-semibold active:scale-95 transition-transform"
+                style={{ background: colors.surface3, color: colors.textSecondary, borderRadius: radii.md }}
               >
                 +15
               </button>
               <button
                 onClick={() => setTimer(null)}
-                className="px-3 h-10 rounded-lg bg-zinc-800 text-zinc-300 text-xs font-semibold active:scale-95"
+                className="px-3 h-10 text-xs font-semibold active:scale-95 transition-transform"
+                style={{ background: colors.surface3, color: colors.textSecondary, borderRadius: radii.md }}
               >
                 Skip
               </button>
@@ -371,26 +411,45 @@ export function WorkoutScreen({ workout, history, onFinish, onBack }: Props) {
 
       {/* Confirm finish modal */}
       {showConfirm && (
-        <div className="fixed inset-0 z-50 flex items-end justify-center p-0" style={{ background: 'rgba(0,0,0,0.8)' }}>
-          <div className="w-full p-5" style={{ background: '#161616', border: '1px solid #222', borderRadius: '12px 12px 0 0' }}>
-            <div className="text-lg font-bold mb-1">Save this session?</div>
-            <div className="text-zinc-500 text-sm mb-5">
+        <div className="fixed inset-0 z-50 flex items-end justify-center p-0">
+          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm animate-backdrop-in" onClick={() => !saving && setShowConfirm(false)} />
+          <div
+            className="relative w-full p-5 animate-sheet-up"
+            style={{
+              background: colors.surface2,
+              border: `1px solid ${colors.border}`,
+              borderBottom: 'none',
+              borderRadius: `${radii.sheet}px ${radii.sheet}px 0 0`,
+              paddingBottom: 'max(env(safe-area-inset-bottom), 20px)',
+              transitionTimingFunction: motion.spring,
+            }}
+          >
+            <div className="flex justify-center pb-3 -mt-1">
+              <div className="w-9 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.15)' }} />
+            </div>
+            <div className="text-lg font-bold mb-1 font-display tracking-tight">Save this session?</div>
+            <div className="text-sm mb-5" style={{ color: colors.textTertiary }}>
               {doneSets} of {totalSets} sets · {elapsedMin} min
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setShowConfirm(false)}
                 disabled={saving}
-                className="flex-1 py-3.5 text-sm font-semibold text-zinc-400 active:text-zinc-200 transition-colors"
-                style={{ background: '#1a1a1a', border: '1px solid #222', borderRadius: 8 }}
+                className="flex-1 py-3.5 text-sm font-semibold active:scale-[0.97] transition-[transform,color] duration-150"
+                style={{
+                  background: colors.surface3,
+                  border: `1px solid ${colors.border}`,
+                  color: colors.textSecondary,
+                  borderRadius: radii.button,
+                }}
               >
                 Keep going
               </button>
               <button
                 onClick={handleConfirmFinish}
                 disabled={saving}
-                className="flex-[2] py-3.5 text-sm font-bold disabled:opacity-50 active:opacity-80 transition-opacity"
-                style={{ background: workout.color.from, color: '#000', borderRadius: 8 }}
+                className="flex-[2] py-3.5 text-sm font-bold disabled:opacity-50 active:scale-[0.97] active:opacity-90 transition-[transform,opacity] duration-150"
+                style={{ background: workout.color.from, color: '#000', borderRadius: radii.button }}
               >
                 {saving ? 'Saving…' : 'Save & finish'}
               </button>
