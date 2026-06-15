@@ -129,9 +129,6 @@ export function Home({ userId, history, onStart, onStartMobility, onSignOut }: P
         </button>
       </div>
 
-      {/* Nicotine-free tracker */}
-      <NicotineCard userId={userId} />
-
       {/* Next workout — accent-washed hero card */}
       <div className="px-5">
         <SectionLabel>Next session</SectionLabel>
@@ -160,6 +157,9 @@ export function Home({ userId, history, onStart, onStartMobility, onSignOut }: P
           </div>
         </Card>
       </div>
+
+      {/* Nicotine-free tracker */}
+      <NicotineCard userId={userId} />
 
       {/* Stats */}
       <div className="px-5 mt-4 grid grid-cols-2 gap-3">
