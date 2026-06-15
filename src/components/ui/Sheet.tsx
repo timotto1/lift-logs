@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { colors, motion, radii } from './tokens';
 
 interface Props {
@@ -29,7 +30,7 @@ export function Sheet({ onClose, children, maxHeight = '90vh' }: Props) {
     setTimeout(onClose, EXIT_MS);
   };
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-50 flex flex-col justify-end" onClick={close}>
       <div
         className="absolute inset-0 bg-black/70 backdrop-blur-sm transition-opacity duration-300"
@@ -55,6 +56,7 @@ export function Sheet({ onClose, children, maxHeight = '90vh' }: Props) {
         </div>
         {typeof children === 'function' ? children(close) : children}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
